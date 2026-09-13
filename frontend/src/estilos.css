@@ -1,0 +1,466 @@
+/* Tokens tirados do protótipo (Figuras 2 a 5): fundo cinza claro,
+   cartão branco, tipografia neutra, ação primária em preto. */
+:root {
+  --tinta: #18181b;
+  --tinta-media: #52525b;
+  --tinta-fraca: #a1a1aa;
+  --papel: #ffffff;
+  --fundo: #f4f4f5;
+  --linha: #e4e4e7;
+  --erro: #b91c1c;
+  --erro-fundo: #fef2f2;
+  --ok: #15803d;
+  --ok-fundo: #f0fdf4;
+  --raio: 8px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--fundo);
+  color: var(--tinta);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---------- cabeçalho ---------- */
+.cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+  padding: 0.85rem 2rem;
+  background: var(--papel);
+  border-bottom: 1px solid var(--linha);
+}
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  text-decoration: none;
+  color: inherit;
+  white-space: nowrap;
+}
+
+.marca strong {
+  font-weight: 650;
+}
+
+.marca span {
+  color: var(--tinta-fraca);
+}
+
+.marca__selo {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: var(--tinta);
+  color: var(--papel);
+}
+
+.cabecalho__links {
+  display: flex;
+  gap: 1.5rem;
+  font-size: 0.85rem;
+}
+
+.cabecalho__links a {
+  color: var(--tinta-media);
+  text-decoration: none;
+}
+
+.cabecalho__links a:hover {
+  color: var(--tinta);
+}
+
+.cabecalho__acoes {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-left: auto;
+  font-size: 0.85rem;
+}
+
+/* ---------- botões ---------- */
+.botao,
+.botao-contorno,
+.botao-texto {
+  font: inherit;
+  font-size: 0.85rem;
+  border-radius: 6px;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.botao {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--tinta);
+  background: var(--tinta);
+  color: var(--papel);
+}
+
+.botao:hover:not(:disabled) {
+  background: #000;
+}
+
+.botao:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+
+.botao-contorno {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--linha);
+  background: var(--papel);
+  color: var(--tinta);
+}
+
+.botao-contorno:hover {
+  border-color: var(--tinta-fraca);
+}
+
+.botao-texto {
+  padding: 0.5rem 0;
+  border: 0;
+  background: none;
+  color: var(--tinta-media);
+}
+
+.botao--largo {
+  width: 100%;
+  padding: 0.7rem;
+  font-size: 0.9rem;
+  font-weight: 550;
+}
+
+/* ---------- página do formulário ---------- */
+.pagina {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 2.5rem 1.25rem 4rem;
+}
+
+.etiqueta {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border: 1px solid var(--linha);
+  border-radius: 999px;
+  background: var(--papel);
+  color: var(--tinta-media);
+  font-size: 0.72rem;
+}
+
+.pagina h1 {
+  margin: 0.9rem 0 0.25rem;
+  font-size: 1.85rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.pagina__apoio {
+  margin: 0 0 1.75rem;
+  color: var(--tinta-media);
+  font-size: 0.88rem;
+}
+
+.cartao {
+  padding: 1.75rem;
+  background: var(--papel);
+  border: 1px solid var(--linha);
+  border-radius: 12px;
+}
+
+/* ---------- formulário ---------- */
+.grade {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem 1.1rem;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.campo--inteiro {
+  grid-column: 1 / -1;
+}
+
+.campo label {
+  font-size: 0.78rem;
+  color: var(--tinta-media);
+}
+
+.campo input,
+.campo select {
+  width: 100%;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--linha);
+  border-radius: 6px;
+  background: var(--papel);
+  color: var(--tinta);
+  font: inherit;
+  font-size: 0.88rem;
+}
+
+.campo input::placeholder {
+  color: var(--tinta-fraca);
+}
+
+.campo input:focus,
+.campo select:focus,
+.botao:focus-visible,
+.botao-contorno:focus-visible,
+.botao-texto:focus-visible,
+a:focus-visible,
+input[type="checkbox"]:focus-visible {
+  outline: 2px solid var(--tinta);
+  outline-offset: 1px;
+}
+
+.campo--invalido input,
+.campo--invalido select {
+  border-color: var(--erro);
+}
+
+.campo__erro {
+  color: var(--erro);
+  font-size: 0.75rem;
+}
+
+.termos {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin: 1.4rem 0 1.1rem;
+  font-size: 0.8rem;
+  color: var(--tinta-media);
+}
+
+.termos input {
+  margin: 0.15rem 0 0;
+  accent-color: var(--tinta);
+}
+
+.rodape-cartao {
+  margin-top: 1.25rem;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--tinta-media);
+  line-height: 1.9;
+}
+
+.rodape-cartao a {
+  color: var(--tinta);
+  font-weight: 550;
+}
+
+/* ---------- avisos ---------- */
+.aviso {
+  padding: 0.7rem 0.85rem;
+  border-radius: var(--raio);
+  border: 1px solid;
+  font-size: 0.83rem;
+}
+
+.aviso--erro {
+  border-color: #fecaca;
+  background: var(--erro-fundo);
+  color: var(--erro);
+}
+
+.aviso--ok {
+  border-color: #bbf7d0;
+  background: var(--ok-fundo);
+  color: var(--ok);
+}
+
+.aviso + .grade,
+.aviso + * {
+  margin-top: 1.1rem;
+}
+
+@media (max-width: 620px) {
+  .cabecalho {
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .cabecalho__links {
+    display: none;
+  }
+
+  .grade {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================================
+   Tela de login (Figura 5) e rodapé
+   ============================================================ */
+
+.pagina--estreita {
+  max-width: 420px;
+  padding-top: 4.5rem;
+}
+
+.selo-tela {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 1.4rem;
+  border: 1px solid var(--linha);
+  border-radius: 10px;
+  background: var(--papel);
+  color: var(--tinta);
+}
+
+.pagina--estreita h1 {
+  margin: 0 0 0.35rem;
+  font-size: 2rem;
+}
+
+.formulario-suave .campo input {
+  padding: 0.7rem 0.8rem;
+  border-radius: 10px;
+  background: #fafafa;
+}
+
+.formulario-suave .campo input:focus {
+  background: var(--papel);
+}
+
+.pilha {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.linha-opcoes {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 1.1rem 0 1.25rem;
+  font-size: 0.8rem;
+}
+
+.lembrar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--tinta-media);
+  cursor: pointer;
+}
+
+.lembrar input {
+  margin: 0;
+  accent-color: var(--tinta);
+}
+
+.link-discreto {
+  color: var(--tinta-media);
+  text-decoration: none;
+}
+
+.link-discreto:hover {
+  color: var(--tinta);
+}
+
+.rodape-cartao--dividido {
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--linha);
+}
+
+/* ---------- rodapé do site ---------- */
+.rodape {
+  margin-top: 4rem;
+  padding: 3rem 2rem 2rem;
+  background: var(--papel);
+  border-top: 1px solid var(--linha);
+}
+
+.rodape__interno {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.rodape__colunas {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2rem;
+  margin: 2.75rem 0 2.5rem;
+}
+
+.rodape__coluna h2 {
+  margin: 0 0 1rem;
+  color: var(--tinta-fraca);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.rodape__coluna ul {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rodape__coluna a {
+  color: var(--tinta-media);
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+
+.rodape__coluna a:hover {
+  color: var(--tinta);
+}
+
+.rodape__base {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 2rem;
+  justify-content: space-between;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--linha);
+  color: var(--tinta-fraca);
+  font-size: 0.78rem;
+}
+
+@media (max-width: 720px) {
+  .rodape {
+    padding: 2.5rem 1.25rem 1.75rem;
+  }
+
+  .rodape__colunas {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.75rem;
+  }
+}
+
+/* Mantém o rodapé no fim da página mesmo em telas curtas */
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app__conteudo {
+  flex: 1;
+}
