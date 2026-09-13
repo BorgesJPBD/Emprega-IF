@@ -1,0 +1,51 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: emprega-if-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: emprega_if
+    ports:
+      - "5432:5432"
+    volumes:
+      - dados-postgres:/var/lib/postgresql/data
+      - ./backend/sql/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d emprega_if"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: ./backend
+    container_name: emprega-if-api
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/emprega_if
+      SECRET_KEY: chave-de-desenvolvimento-nao-usar-em-producao
+      CORS_ORIGINS: http://localhost:5173
+      DOMINIOS_EMAIL_PERMITIDOS: ""
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build: ./frontend
+    container_name: emprega-if-web
+    environment:
+      VITE_API_URL: http://localhost:8000
+      DOCKER: "true"
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - api
+
+volumes:
+  dados-postgres:
