@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 /* Tokens tirados do protótipo (Figuras 2 a 5): fundo cinza claro,
    cartão branco, tipografia neutra, ação primária em preto. */
 :root {
