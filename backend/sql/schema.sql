@@ -48,8 +48,10 @@ CREATE TABLE IF NOT EXISTS empresas (
     setor          VARCHAR(60),
     email_contato  VARCHAR(100) UNIQUE NOT NULL,
     telefone       VARCHAR(11),
+    endereco       VARCHAR(200),
     senha_hash     VARCHAR(255) NOT NULL,
     criado_em      TIMESTAMPTZ  NOT NULL DEFAULT now()
+
 );
 
 -- ------------------------------------------------------------

@@ -1,5 +1,10 @@
 import { Link, Route, Routes } from "react-router-dom";
 
+
+import ParaEmpresas from "./pages/ParaEmpresas";
+import ParaEstudantes from "./pages/ParaEstudantes";
+import EscolhaCadastro from "./pages/EscolhaCadastro";
+import CadastroEmpresa from "./pages/CadastroEmpresa";
 import Cabecalho from "./componentes/Cabecalho";
 import Rodape from "./componentes/Rodape";
 import CadastroEstudante from "./pages/CadastroEstudante";
@@ -27,11 +32,14 @@ export default function App() {
 
       <div className="app__conteudo">
         <Routes>
+          <Route path="/para-estudantes" element={<ParaEstudantes />} />
+          <Route path="/para-empresas" element={<ParaEmpresas />} />
+          <Route path="/cadastro" element={<EscolhaCadastro />} />
           <Route path="/" element={<EmBreve titulo="Página inicial" figura="Figura 2" />} />
           <Route path="/cadastro/estudante" element={<CadastroEstudante />} />
           <Route
             path="/cadastro/empresa"
-            element={<EmBreve titulo="Cadastro de empresa" figura="Figura 4" />}
+            element={<CadastroEmpresa />}
           />
           <Route path="/login" element={<Login />} />
           <Route

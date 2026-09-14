@@ -10,7 +10,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.db import abrir_pool, fechar_pool, query_one
-from app.routers import auth, estudantes
+from app.routers import auth, empresas, estudantes
 from config import settings
 
 
@@ -39,6 +39,7 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(estudantes.router)
+app.include_router(empresas.router)
 
 
 @app.get("/health", tags=["Infra"])
