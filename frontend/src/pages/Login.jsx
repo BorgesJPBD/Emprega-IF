@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { post } from "../api";
 import { salvarSessao } from "../auth";
 import Campo from "../componentes/Campo";
+
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -12,6 +13,7 @@ export default function Login() {
   const [erroGeral, setErroGeral] = useState("");
   const [carregando, setCarregando] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -21,7 +23,7 @@ export default function Login() {
     try {
       const dados = await post("/auth/login", { email, senha, lembrar_me: lembrarMe });
       salvarSessao(dados, lembrarMe);
-      navigate("/");
+      navigate(location.state?.de ?? "/")
     } catch (err) {
       if (err.campos && Object.keys(err.campos).length) {
         setErros(err.campos);

@@ -9,6 +9,10 @@ import Cabecalho from "./componentes/Cabecalho";
 import Rodape from "./componentes/Rodape";
 import CadastroEstudante from "./pages/CadastroEstudante";
 import Login from "./pages/Login";
+import Home from "./pages/Home";
+import Vagas from "./pages/Vagas";
+import PublicarVaga from "./pages/PublicarVaga";
+import DetalheVaga from "./pages/DetalheVaga"; 
 
 /** Telas ainda não construídas. Cada uma sai daqui quando for implementada. */
 function EmBreve({ titulo, figura }) {
@@ -35,7 +39,7 @@ export default function App() {
           <Route path="/para-estudantes" element={<ParaEstudantes />} />
           <Route path="/para-empresas" element={<ParaEmpresas />} />
           <Route path="/cadastro" element={<EscolhaCadastro />} />
-          <Route path="/" element={<EmBreve titulo="Página inicial" figura="Figura 2" />} />
+          <Route path="/" element={<Home />} />
           <Route path="/cadastro/estudante" element={<CadastroEstudante />} />
           <Route
             path="/cadastro/empresa"
@@ -46,11 +50,9 @@ export default function App() {
             path="/recuperar-senha"
             element={<EmBreve titulo="Recuperar senha" figura="RN-05" />}
           />
-          <Route path="/vagas" element={<EmBreve titulo="Vagas" figura="UC02" />} />
-          <Route
-            path="/vagas/nova"
-            element={<EmBreve titulo="Publicar vaga" figura="Figura 4" />}
-          />
+          <Route path="/vagas" element={<Vagas />} />
+          <Route path="/vagas/nova" element={<PublicarVaga />} />
+          <Route path="/vagas/:id" element={<DetalheVaga />} />
           <Route path="*" element={<EmBreve titulo="Página não encontrada" figura="404" />} />
         </Routes>
       </div>
