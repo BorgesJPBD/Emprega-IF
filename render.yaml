@@ -1,0 +1,49 @@
+# Configuração do Render (https://render.com) para colocar o Emprega IF no ar.
+# No painel do Render: New > Blueprint > escolha este repositório.
+#
+# O banco fica no Neon (https://neon.tech), não no Render: o PostgreSQL
+# grátis do Render apaga os dados depois de 30 dias.
+
+services:
+  # ---------- API (FastAPI) ----------
+  - type: web
+    name: emprega-if-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: DATABASE_URL          # cole a connection string do Neon
+        sync: false
+      - key: SECRET_KEY            # o Render gera uma chave aleatória
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: https://emprega-if.onrender.com
+      - key: CORS_ORIGIN_REGEX     # aceita também se o Render der outro nome ao site
+        value: ^https://emprega-if[a-z0-9-]*\.onrender\.com$
+      - key: CRIAR_TABELAS_AO_INICIAR
+        value: "true"
+      - key: CARREGAR_DADOS_EXEMPLO
+        value: "true"
+      - key: DOMINIOS_EMAIL_PERMITIDOS   # vazio = aceita qualquer e-mail
+        value: ""
+
+  # ---------- Site (React) ----------
+  - type: web
+    name: emprega-if
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL          # endereço da API acima
+        value: https://emprega-if-api.onrender.com
+    routes:
+      # sem isto, recarregar /vagas ou /login daria "Not Found"
+      - type: rewrite
+        source: /*
+        destination: /index.html

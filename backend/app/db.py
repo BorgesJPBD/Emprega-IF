@@ -21,6 +21,7 @@ concatenado na string de SQL. É isso que protege contra SQL injection.
 """
 
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from psycopg.rows import dict_row
 from psycopg_pool import AsyncConnectionPool
@@ -37,9 +38,22 @@ async def abrir_pool() -> None:
         min_size=settings.DB_POOL_MIN,
         max_size=settings.DB_POOL_MAX,
         kwargs={"row_factory": dict_row},
+        # Testa cada conexão antes de entregar para a rota. Bancos na nuvem
+        # (como o Neon) "dormem" e derrubam conexões paradas; sem este
+        # teste, a primeira requisição depois disso daria erro.
+        check=AsyncConnectionPool.check_connection,
+        # fecha conexões paradas há mais de 2 minutos
+        max_idle=120,
         open=False,
     )
     await _pool.open()
+
+
+async def executar_script(caminho: Path) -> None:
+    """Roda um arquivo .sql inteiro (vários comandos) numa transação."""
+    sql = caminho.read_text(encoding="utf-8")
+    async with get_pool().connection() as conn:
+        await conn.execute(sql)
 
 
 async def fechar_pool() -> None:

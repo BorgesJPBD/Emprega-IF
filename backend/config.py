@@ -28,6 +28,16 @@ class Settings:
         os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173")
     )
 
+    # Alternativa a CORS_ORIGINS para quando o endereço do site muda
+    # (ex.: subdomínios do Render). Vazio = desligado.
+    CORS_ORIGIN_REGEX: str | None = os.getenv("CORS_ORIGIN_REGEX") or None
+
+    # Hospedagem: cria as tabelas e/ou carrega os dados de exemplo quando a
+    # API sobe. Os dois scripts podem rodar várias vezes sem duplicar nada.
+    # No Docker ficam desligados, porque o PostgreSQL já roda os scripts.
+    CRIAR_TABELAS_AO_INICIAR: bool = os.getenv("CRIAR_TABELAS_AO_INICIAR", "").lower() == "true"
+    CARREGAR_DADOS_EXEMPLO: bool = os.getenv("CARREGAR_DADOS_EXEMPLO", "").lower() == "true"
+
     # Validação de vínculo com o IF (UC01, passo 3).
     # Vazio = aceita qualquer domínio (útil para testar).
     DOMINIOS_EMAIL_PERMITIDOS: list[str] = _lista(

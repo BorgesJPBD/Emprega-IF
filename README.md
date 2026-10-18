@@ -210,6 +210,19 @@ Se preferir começar do zero no Docker: `docker compose down -v` e depois
 
 ---
 
+### 3.4 Colocando no ar (Render + Neon)
+
+- **Banco:** [Neon](https://neon.tech), plano grátis. Copie a *connection string* do projeto.
+- **API e site:** [Render](https://render.com) → **New → Blueprint** → este repositório.
+  O `render.yaml` já descreve os dois serviços; o Render só pede o `DATABASE_URL`
+  (a string do Neon).
+- As tabelas e as vagas de exemplo são criadas sozinhas na primeira vez que a API
+  sobe (`CRIAR_TABELAS_AO_INICIAR` e `CARREGAR_DADOS_EXEMPLO`).
+- No plano grátis a API "dorme" após 15 minutos sem acesso e leva cerca de 1 minuto
+  para acordar: abra o site alguns minutos antes de apresentar.
+
+---
+
 ## 4. Trabalhando em equipe
 
 **Nunca suba arquivos `.env`.** Eles contêm a senha do banco e a chave de

@@ -5,11 +5,12 @@ Docs em:   http://localhost:8000/docs
 """
 
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.db import abrir_pool, fechar_pool, query_one
+from app.db import abrir_pool, executar_script, fechar_pool, query_one
 from app.routers import auth, candidaturas, empresas, estudantes, vagas
 from config import settings
 
@@ -17,6 +18,13 @@ from config import settings
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await abrir_pool()
+
+    pasta_sql = Path(__file__).parent / "sql"
+    if settings.CRIAR_TABELAS_AO_INICIAR:
+        await executar_script(pasta_sql / "schema.sql")
+    if settings.CARREGAR_DADOS_EXEMPLO:
+        await executar_script(pasta_sql / "dados_exemplo.sql")
+
     yield
     await fechar_pool()
 
@@ -32,6 +40,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
+    allow_origin_regex=settings.CORS_ORIGIN_REGEX,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
