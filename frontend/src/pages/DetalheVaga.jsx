@@ -5,9 +5,10 @@ import {
   Hourglass, Laptop, MapPin, SearchX, Users,
 } from "lucide-react";
 
+import { get, post } from "../api";
 import { lerSessao } from "../auth";
 import CartaoVaga from "../componentes/CartaoVaga";
-import { VAGAS } from "../dados/vagas";
+import { buscarParecidas, buscarVaga } from "../vagas";
 
 const ESTILO = `
 @keyframes entra{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
@@ -15,27 +16,15 @@ const ESTILO = `
 @media (prefers-reduced-motion:reduce){.anima-entra{animation:none}}
 `;
 
-/* ---------- candidatura simulada ----------
-   Guarda os ids no navegador para sobreviver ao refresh. Com o endpoint pronto,
-   troque o corpo de enviarCandidatura por: return post("/candidaturas", { vaga_id: id });
-   (a API vai precisar do token no cabeçalho Authorization). */
-const CHAVE = "emprega-if:candidaturas";
+/* ---------- candidatura ----------
+   Grava na tabela `candidaturas`. O estudante é identificado pelo token
+   que vai no cabeçalho (ver api.js), nunca por um id mandado daqui. */
+const enviarCandidatura = (vagaId) => post("/candidaturas", { vaga_id: vagaId });
 
-function lerCandidaturas() {
-  try {
-    return JSON.parse(localStorage.getItem(CHAVE)) || [];
-  } catch {
-    return [];
-  }
-}
-
-async function enviarCandidatura(id) {
-  await new Promise((resolver) => setTimeout(resolver, 700));
-  try {
-    localStorage.setItem(CHAVE, JSON.stringify([...new Set([...lerCandidaturas(), id])]));
-  } catch {
-    /* sem armazenamento: a candidatura vale só nesta tela */
-  }
+/** ids das vagas em que o estudante logado já se candidatou */
+async function vagasCandidatadas() {
+  const lista = await get("/candidaturas/minhas");
+  return lista.map((c) => c.vaga_id);
 }
 
 const DIA = 86400000;
@@ -78,18 +67,50 @@ function Fato({ Icone, rotulo, valor }) {
 export default function DetalheVaga() {
   const { id } = useParams();
   const { pathname } = useLocation();
-  const vaga = VAGAS.find((v) => String(v.id) === id);
   const sessao = lerSessao();
+  const papel = sessao?.usuario?.papel;
 
+  const [vaga, setVaga] = useState(null);
+  const [parecidas, setParecidas] = useState([]);
+  const [carregando, setCarregando] = useState(true);
   const [candidatou, setCandidatou] = useState(false);
   const [enviando, setEnviando] = useState(false);
+  const [erroCandidatura, setErroCandidatura] = useState("");
   const [copiado, setCopiado] = useState(false);
 
   useEffect(() => {
+    let ativo = true; // evita atualizar a tela se a pessoa trocar de vaga no meio da carga
     window.scrollTo(0, 0);
-    setCandidatou(lerCandidaturas().includes(Number(id)));
+    setCarregando(true);
+    setCandidatou(false);
+    setErroCandidatura("");
     setCopiado(false);
-  }, [id]);
+
+    buscarVaga(id)
+      .then((v) => ativo && setVaga(v))
+      .catch(() => ativo && setVaga(null))
+      .finally(() => ativo && setCarregando(false));
+
+    buscarParecidas(id)
+      .then((lista) => ativo && setParecidas(lista))
+      .catch(() => ativo && setParecidas([]));
+
+    if (papel === "estudante") {
+      vagasCandidatadas()
+        .then((ids) => ativo && setCandidatou(ids.includes(id)))
+        .catch(() => {});
+    }
+    return () => { ativo = false; };
+  }, [id, papel]);
+
+  if (carregando) {
+    return (
+      <main className="mx-auto max-w-screen-xl px-8 py-10" aria-busy="true">
+        <div className="h-40 animate-pulse rounded-2xl border border-neutral-200 bg-white" />
+        <div className="mt-6 h-96 animate-pulse rounded-2xl border border-neutral-200 bg-white" />
+      </main>
+    );
+  }
 
   if (!vaga) {
     return (
@@ -108,7 +129,7 @@ export default function DetalheVaga() {
   hoje.setHours(0, 0, 0, 0);
   const prazo = paraData(vaga.prazo);
   const dias = Math.ceil((prazo - hoje) / DIA);
-  const encerrada = dias < 0;
+  const encerrada = dias < 0 || vaga.situacao !== "Ativa";
   const duracao = Math.max((prazo - paraData(vaga.publicadaEm)) / DIA, 1);
   const progresso = encerrada ? 100 : Math.min(Math.max(1 - dias / duracao, 0), 1) * 100;
   const textoPrazo = encerrada
@@ -118,17 +139,21 @@ export default function DetalheVaga() {
       : `${dias} ${dias === 1 ? "dia restante" : "dias restantes"}`;
 
   const { Icone } = vaga;
-  const papel = sessao?.usuario?.papel;
-  const parecidas = VAGAS
-    .filter((v) => v.id !== vaga.id && (v.tipo === vaga.tipo || v.area === vaga.area))
-    .sort((a, b) => (b.area === vaga.area) - (a.area === vaga.area))
-    .slice(0, 3);
 
   async function candidatar() {
     setEnviando(true);
+    setErroCandidatura("");
     try {
       await enviarCandidatura(vaga.id);
       setCandidatou(true);
+    } catch (erro) {
+      if (erro.status === 409 && erro.campos?.vaga_id) {
+        setCandidatou(true); // já tinha se candidatado (outra aba, outro aparelho)
+      } else if (erro.status === 401) {
+        setErroCandidatura("Sua sessão expirou. Entre novamente para se candidatar.");
+      } else {
+        setErroCandidatura(erro.message);
+      }
     } finally {
       setEnviando(false);
     }
@@ -178,8 +203,12 @@ export default function DetalheVaga() {
         >
           <p className="text-xs text-neutral-400">Remuneração</p>
           <p className="mt-1 text-3xl font-semibold tabular-nums tracking-tight text-neutral-900">
-            R$ {vaga.valor.toLocaleString("pt-BR")}
-            <span className="text-sm font-normal text-neutral-400"> / mês</span>
+            {vaga.valor ? (
+              <>
+                R$ {vaga.valor.toLocaleString("pt-BR")}
+                <span className="text-sm font-normal text-neutral-400"> / mês</span>
+              </>
+            ) : "A combinar"}
           </p>
 
           <dl className="mt-5 space-y-4 border-t border-neutral-100 pt-5">
@@ -234,6 +263,12 @@ export default function DetalheVaga() {
                 {enviando ? "Enviando..." : "Candidatar-se"}
               </button>
             )}
+            {erroCandidatura && (
+              <p role="alert" className="mt-3 text-xs text-red-600">
+                {erroCandidatura}{" "}
+                {!lerSessao() && <Link to="/login" state={{ de: pathname }} className="font-medium underline">Entrar</Link>}
+              </p>
+            )}
           </div>
 
           <button
@@ -252,9 +287,12 @@ export default function DetalheVaga() {
           <Secao titulo="Requisitos">
             <Marcadores itens={vaga.requisitos} cor="text-neutral-400" />
           </Secao>
-          <Secao titulo="Diferenciais">
-            <Marcadores itens={vaga.diferenciais} cor="text-emerald-600" />
-          </Secao>
+          {vaga.diferenciais.length > 0 && (
+            <Secao titulo="Diferenciais">
+              <Marcadores itens={vaga.diferenciais} cor="text-emerald-600" />
+            </Secao>
+          )}
+          {vaga.beneficios.length > 0 && (
           <Secao titulo="Benefícios">
             <div className="flex flex-wrap gap-2">
               {vaga.beneficios.map((beneficio) => (
@@ -264,6 +302,7 @@ export default function DetalheVaga() {
               ))}
             </div>
           </Secao>
+          )}
         </div>
       </div>
 

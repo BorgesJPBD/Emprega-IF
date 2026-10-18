@@ -1,28 +1,28 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { ArrowLeft, Briefcase, CheckCircle2 } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
+import { ArrowLeft, Briefcase, Building2, CheckCircle2, Lock } from "lucide-react";
 
-import { ErroApi } from "../api";
+import { ErroApi, post } from "../api";
+import { lerSessao } from "../auth";
 import CartaoVaga from "../componentes/CartaoVaga";
-import {
-  apenasDigitos, cnpjValido, mascaraCnpj, mascaraMoeda, mascaraTelefone, valorEmNumero,
-} from "../utils/formulario";
+import { mascaraMoeda, valorEmNumero } from "../utils/formulario";
 
-const SETORES = ["Tecnologia da Informação", "Educação", "Saúde", "Indústria", "Comércio", "Serviços", "Agronegócio", "Financeiro", "Logística", "Construção Civil", "Outro"];
+/* mesmas listas do backend (app/schemas.py) */
 const TIPOS = ["Estágio", "Jovem aprendiz"];
 const AREAS = ["Tecnologia", "Administrativo", "Marketing", "Design", "Vendas", "Recursos Humanos", "Engenharia", "Logística", "Outra"];
 const MODALIDADES = ["Presencial", "Híbrido", "Remoto"];
 
+/* os nomes dos campos são os mesmos da API (POST /vagas), para os erros
+   que voltam do backend caírem embaixo do input certo */
 const INICIAL = {
-  razao_social: "", nome_fantasia: "", cnpj: "", setor: "", email_contato: "", telefone: "",
-  titulo: "", tipo: "", area: "", cidade: "", modalidade: "",
+  titulo: "", tipo: "", area: "", localizacao: "", modalidade: "",
   horario_entrada: "", horario_saida: "", carga_horaria: "", remuneracao: "", beneficios: "",
   descricao: "", requisitos: "", diferenciais: "",
-  data_limite: "", numero_vagas: "1", aceite: false,
+  prazo_inscricao: "", numero_vagas: "1", aceite_termos: false,
 };
 
 /* ordem em que os campos aparecem: o primeiro com erro recebe o foco */
-const ORDEM = ["razao_social", "cnpj", "setor", "email_contato", "telefone", "titulo", "tipo", "area", "cidade", "modalidade", "horario_saida", "descricao", "requisitos", "data_limite", "numero_vagas", "aceite"];
+const ORDEM = ["titulo", "tipo", "area", "localizacao", "modalidade", "horario_entrada", "horario_saida", "carga_horaria", "remuneracao", "beneficios", "descricao", "requisitos", "diferenciais", "prazo_inscricao", "numero_vagas", "aceite_termos"];
 
 const ESTILO = `
 @keyframes entra{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
@@ -87,39 +87,64 @@ function validar(f) {
   const e = {};
   const hoje = new Date().toISOString().slice(0, 10);
 
-  ["razao_social", "cnpj", "setor", "email_contato", "titulo", "tipo", "area", "cidade", "modalidade", "descricao", "requisitos", "data_limite"]
+  ["titulo", "tipo", "area", "localizacao", "modalidade", "descricao", "requisitos", "prazo_inscricao"]
     .forEach((c) => { if (!f[c].trim()) e[c] = "Campo obrigatório."; });
 
-  if (!e.cnpj && !cnpjValido(f.cnpj)) e.cnpj = "CNPJ inválido.";
-  if (!e.email_contato && !/^\S+@\S+\.\S+$/.test(f.email_contato)) e.email_contato = "E-mail inválido.";
-  if (f.telefone && ![10, 11].includes(apenasDigitos(f.telefone).length)) e.telefone = "Telefone deve ter DDD e 8 ou 9 dígitos.";
   if (f.horario_entrada && f.horario_saida && f.horario_saida <= f.horario_entrada) e.horario_saida = "A saída deve ser depois da entrada.";
   if (!e.descricao && f.descricao.trim().length < 30) e.descricao = "Descreva a vaga com pelo menos 30 caracteres.";
-  if (!e.data_limite && f.data_limite < hoje) e.data_limite = "A data limite não pode estar no passado.";
+  if (!e.prazo_inscricao && f.prazo_inscricao < hoje) e.prazo_inscricao = "A data limite não pode estar no passado.";
   if (!Number.isInteger(Number(f.numero_vagas)) || Number(f.numero_vagas) < 1) e.numero_vagas = "Informe ao menos 1 vaga.";
-  if (!f.aceite) e.aceite = "Confirme para publicar.";
+  if (!f.aceite_termos) e.aceite_termos = "Confirme para publicar.";
   return e;
 }
 
-/** Hoje só simula o envio. Quando existir o endpoint, troque por:
- *   import { post } from "../api";   return post("/vagas", dados);
- *  (o schema.sql ainda não tem colunas para área, modalidade, horários etc.) */
-async function publicarVaga(dados) {
-  await new Promise((resolver) => setTimeout(resolver, 800));
-  return dados;
-}
+/** Grava na tabela `vagas`. A empresa vem do token de login, não do formulário. */
+const publicarVaga = (dados) => post("/vagas", dados);
 
+/** Campo opcional vazio vai como null, não como "" (o banco espera nulo). */
 function montarPayload(f) {
+  const ouNulo = (v) => (v.trim() ? v.trim() : null);
   return {
     ...f,
-    cnpj: apenasDigitos(f.cnpj),
-    telefone: apenasDigitos(f.telefone) || null,
+    horario_entrada: f.horario_entrada || null,
+    horario_saida: f.horario_saida || null,
+    carga_horaria: ouNulo(f.carga_horaria),
+    beneficios: ouNulo(f.beneficios),
+    diferenciais: ouNulo(f.diferenciais),
     remuneracao: f.remuneracao ? valorEmNumero(f.remuneracao) : null,
     numero_vagas: Number(f.numero_vagas),
   };
 }
 
+/** Quem não está logado como empresa vê este aviso no lugar do formulário. */
+function SomenteEmpresa({ papel }) {
+  const { pathname } = useLocation();
+  return (
+    <main className="mx-auto max-w-xl px-5 py-20 text-center">
+      <style>{ESTILO}</style>
+      <div className="anima-entra rounded-2xl border border-neutral-200 bg-white p-8">
+        <Lock className="mx-auto size-9 text-neutral-400" />
+        <h1 className="mt-4 text-2xl font-semibold tracking-tight text-neutral-900">Publicar vaga</h1>
+        <p className="mt-2 text-sm text-neutral-500">
+          {papel === "estudante"
+            ? "Você está conectado com uma conta de estudante. Para publicar vagas, entre com a conta da empresa."
+            : "Para publicar uma vaga, entre com a conta da sua empresa."}
+        </p>
+        <Link to="/login" state={{ de: pathname }} className="mt-6 block w-full rounded-xl bg-neutral-900 py-3.5 text-sm font-medium text-white transition hover:bg-black">
+          Entrar como empresa
+        </Link>
+        <p className="mt-4 text-sm text-neutral-500">
+          Ainda não tem conta? <Link className="font-medium text-neutral-900" to="/cadastro/empresa">Criar conta empresarial</Link>
+        </p>
+      </div>
+    </main>
+  );
+}
+
 export default function PublicarVaga() {
+  const sessao = lerSessao();
+  const empresa = sessao?.usuario?.papel === "empresa" ? sessao.usuario : null;
+
   const [form, setForm] = useState(INICIAL);
   const [erros, setErros] = useState({});
   const [avisoErro, setAvisoErro] = useState("");
@@ -147,16 +172,22 @@ export default function PublicarVaga() {
 
     setEnviando(true);
     try {
-      await publicarVaga(montarPayload(form));
-      setPublicada({ titulo: form.titulo });
+      const vaga = await publicarVaga(montarPayload(form));
+      setPublicada(vaga);
       setForm(INICIAL);
     } catch (erro) {
       if (erro instanceof ErroApi) setErros(erro.campos);
-      setAvisoErro(erro.message || "Não foi possível publicar a vaga. Tente novamente.");
+      setAvisoErro(
+        erro.status === 401
+          ? "Sua sessão expirou. Entre novamente para publicar (o que você digitou continua aqui)."
+          : erro.message || "Não foi possível publicar a vaga. Tente novamente."
+      );
     } finally {
       setEnviando(false);
     }
   }
+
+  if (!empresa) return <SomenteEmpresa papel={sessao?.usuario?.papel} />;
 
   if (publicada) {
     return (
@@ -168,8 +199,8 @@ export default function PublicarVaga() {
           <p className="mt-2 text-sm text-neutral-500">
             “{publicada.titulo}” já aparece para os estudantes do IF.
           </p>
-          <Link to="/vagas" className="mt-6 block w-full rounded-xl bg-neutral-900 py-3.5 text-sm font-medium text-white transition hover:bg-black">
-            Ver vagas
+          <Link to={`/vagas/${publicada.id}`} className="mt-6 block w-full rounded-xl bg-neutral-900 py-3.5 text-sm font-medium text-white transition hover:bg-black">
+            Ver a vaga publicada
           </Link>
           <button type="button" onClick={() => setPublicada(null)} className="mt-4 text-sm text-neutral-500 hover:text-neutral-900">
             Publicar outra vaga
@@ -185,9 +216,9 @@ export default function PublicarVaga() {
     id: 0,
     Icone: Briefcase,
     titulo: form.titulo || "Título da vaga",
-    empresa: form.nome_fantasia || form.razao_social || "Sua empresa",
+    empresa: empresa.nome,
     tipo: form.tipo || "Tipo",
-    local: form.cidade || "Cidade - UF",
+    local: form.localizacao || "Cidade - UF",
     horario: form.horario_entrada && form.horario_saida
       ? `${hora(form.horario_entrada)} às ${hora(form.horario_saida)}`
       : "Horário a definir",
@@ -216,20 +247,22 @@ export default function PublicarVaga() {
               <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{avisoErro}</p>
             )}
 
-            <Secao titulo="Dados da empresa">
-              <Campo className={MEIO} nome="razao_social" rotulo="Razão social" placeholder="Empresa Ltda" {...ligar("razao_social")} />
-              <Campo className={MEIO} nome="nome_fantasia" rotulo="Nome fantasia" placeholder="Empresa" {...ligar("nome_fantasia")} />
-              <Campo className={MEIO} nome="cnpj" rotulo="CNPJ" placeholder="00.000.000/0000-00" inputMode="numeric" {...ligar("cnpj", mascaraCnpj)} />
-              <Campo className={MEIO} nome="setor" rotulo="Setor de atuação" como="select" lista={SETORES} {...ligar("setor")} />
-              <Campo className={MEIO} nome="email_contato" rotulo="E-mail de contato" type="email" placeholder="rh@empresa.com" {...ligar("email_contato")} />
-              <Campo className={MEIO} nome="telefone" rotulo="Telefone" placeholder="(00) 00000-0000" inputMode="tel" {...ligar("telefone", mascaraTelefone)} />
-            </Secao>
+            <div className="flex items-center gap-4 rounded-2xl border border-neutral-200 bg-white p-5">
+              <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-neutral-100 text-neutral-600">
+                <Building2 className="size-5" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-xs text-neutral-500">Publicando como</p>
+                <p className="truncate text-sm font-medium text-neutral-900">{empresa.nome}</p>
+                <p className="truncate text-xs text-neutral-400">{empresa.email}</p>
+              </div>
+            </div>
 
             <Secao titulo="Detalhes da vaga">
               <Campo className={TODO} nome="titulo" rotulo="Título da vaga" placeholder="Ex: Estágio em Desenvolvimento Web" maxLength={100} {...ligar("titulo")} />
               <Campo className={MEIO} nome="tipo" rotulo="Tipo de vaga" como="select" lista={TIPOS} {...ligar("tipo")} />
               <Campo className={MEIO} nome="area" rotulo="Área de atuação" como="select" lista={AREAS} {...ligar("area")} />
-              <Campo className={MEIO} nome="cidade" rotulo="Cidade / Estado" placeholder="São Paulo - SP" {...ligar("cidade")} />
+              <Campo className={MEIO} nome="localizacao" rotulo="Cidade / Estado" placeholder="São Paulo - SP" maxLength={100} {...ligar("localizacao")} />
               <Campo className={MEIO} nome="modalidade" rotulo="Modalidade" como="select" lista={MODALIDADES} {...ligar("modalidade")} />
               <Campo className={TERCO} nome="horario_entrada" rotulo="Horário de entrada" type="time" {...ligar("horario_entrada")} />
               <Campo className={TERCO} nome="horario_saida" rotulo="Horário de saída" type="time" {...ligar("horario_saida")} />
@@ -240,21 +273,21 @@ export default function PublicarVaga() {
 
             <Secao titulo="Descrição e requisitos">
               <Campo className={TODO} como="textarea" nome="descricao" rotulo="Descrição da vaga" maxLength={1500} placeholder="Descreva as responsabilidades, o dia a dia e o que o candidato irá aprender..." {...ligar("descricao")} />
-              <Campo className={TODO} como="textarea" nome="requisitos" rotulo="Requisitos" maxLength={1000} placeholder="Liste os requisitos desejados: curso, semestre mínimo, habilidades técnicas..." {...ligar("requisitos")} />
-              <Campo className={TODO} como="textarea" rows={3} nome="diferenciais" rotulo="Diferenciais (opcional)" maxLength={800} placeholder="Conhecimentos ou experiências que serão um diferencial..." {...ligar("diferenciais")} />
+              <Campo className={TODO} como="textarea" nome="requisitos" rotulo="Requisitos (um por linha)" maxLength={1000} placeholder="Liste os requisitos desejados, um por linha: curso, semestre mínimo, habilidades técnicas..." {...ligar("requisitos")} />
+              <Campo className={TODO} como="textarea" rows={3} nome="diferenciais" rotulo="Diferenciais (opcional, um por linha)" maxLength={800} placeholder="Conhecimentos ou experiências que serão um diferencial..." {...ligar("diferenciais")} />
             </Secao>
 
-            <Secao titulo="Prazo e contato">
-              <Campo className={MEIO} nome="data_limite" rotulo="Data limite para candidatura" type="date" min={new Date().toISOString().slice(0, 10)} {...ligar("data_limite")} />
+            <Secao titulo="Prazo">
+              <Campo className={MEIO} nome="prazo_inscricao" rotulo="Data limite para candidatura" type="date" min={new Date().toISOString().slice(0, 10)} {...ligar("prazo_inscricao")} />
               <Campo className={MEIO} nome="numero_vagas" rotulo="Número de vagas" type="number" min="1" inputMode="numeric" {...ligar("numero_vagas")} />
             </Secao>
 
             <div>
-              <label className="flex items-start gap-3 text-sm text-neutral-600" htmlFor="aceite">
+              <label className="flex items-start gap-3 text-sm text-neutral-600" htmlFor="aceite_termos">
                 <input
-                  id="aceite" type="checkbox" className="mt-0.5 size-4 accent-neutral-900"
-                  checked={form.aceite} onChange={(ev) => alterar("aceite", ev.target.checked)}
-                  aria-invalid={erros.aceite ? "true" : undefined}
+                  id="aceite_termos" type="checkbox" className="mt-0.5 size-4 accent-neutral-900"
+                  checked={form.aceite_termos} onChange={(ev) => alterar("aceite_termos", ev.target.checked)}
+                  aria-invalid={erros.aceite_termos ? "true" : undefined}
                 />
                 <span>
                   Confirmo que as informações fornecidas são verdadeiras e que esta empresa está legalmente
@@ -262,7 +295,7 @@ export default function PublicarVaga() {
                   (Lei 11.788/2008 e CLT art. 428).
                 </span>
               </label>
-              {erros.aceite && <p className="mt-1.5 text-xs text-red-600">{erros.aceite}</p>}
+              {erros.aceite_termos && <p className="mt-1.5 text-xs text-red-600">{erros.aceite_termos}</p>}
             </div>
 
             <button
@@ -272,11 +305,6 @@ export default function PublicarVaga() {
               {enviando ? "Publicando..." : "Publicar vaga"}
             </button>
 
-            <p className="text-center text-sm text-neutral-500">
-              Já tem uma conta? <Link className="font-medium text-neutral-900" to="/login">Entrar</Link>
-              {" · "}
-              <Link className="font-medium text-neutral-900" to="/cadastro/empresa">Criar conta empresarial</Link>
-            </p>
           </form>
         </div>
 

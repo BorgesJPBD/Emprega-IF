@@ -56,6 +56,11 @@ CREATE TABLE IF NOT EXISTS empresas (
 
 -- ------------------------------------------------------------
 -- vagas  (igual ao item 4.8.2, + estados da Figura 11)
+--
+-- Colunas acrescentadas para a tela Publicar Vaga (Figura 4):
+--   area, modalidade, horario_entrada, horario_saida,
+--   carga_horaria, beneficios, diferenciais, numero_vagas.
+-- requisitos, diferenciais e beneficios guardam um item por linha.
 -- ------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS vagas (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -72,6 +77,20 @@ CREATE TABLE IF NOT EXISTS vagas (
     prazo_inscricao DATE,
     data_publicacao TIMESTAMPTZ
 );
+
+-- ALTER em vez de colocar no CREATE: assim quem já tem o banco criado
+-- só roda este arquivo de novo e as colunas aparecem, sem perder dados.
+ALTER TABLE vagas ADD COLUMN IF NOT EXISTS area            VARCHAR(40);
+ALTER TABLE vagas ADD COLUMN IF NOT EXISTS modalidade      VARCHAR(20)
+    CHECK (modalidade IN ('Presencial', 'Híbrido', 'Remoto'));
+ALTER TABLE vagas ADD COLUMN IF NOT EXISTS horario_entrada TIME;
+ALTER TABLE vagas ADD COLUMN IF NOT EXISTS horario_saida   TIME;
+ALTER TABLE vagas ADD COLUMN IF NOT EXISTS carga_horaria   VARCHAR(30);
+ALTER TABLE vagas ADD COLUMN IF NOT EXISTS beneficios      TEXT;
+ALTER TABLE vagas ADD COLUMN IF NOT EXISTS diferenciais    TEXT;
+ALTER TABLE vagas ADD COLUMN IF NOT EXISTS numero_vagas    SMALLINT NOT NULL DEFAULT 1
+    CHECK (numero_vagas >= 1);
+ALTER TABLE vagas ADD COLUMN IF NOT EXISTS criado_em       TIMESTAMPTZ NOT NULL DEFAULT now();
 
 -- ------------------------------------------------------------
 -- candidaturas  (igual ao item 4.8.2)
@@ -90,3 +109,4 @@ CREATE TABLE IF NOT EXISTS candidaturas (
 CREATE INDEX IF NOT EXISTS idx_vagas_situacao ON vagas (situacao);
 CREATE INDEX IF NOT EXISTS idx_vagas_tipo ON vagas (tipo);
 CREATE INDEX IF NOT EXISTS idx_candidaturas_estudante ON candidaturas (estudante_id);
+CREATE INDEX IF NOT EXISTS idx_vagas_empresa ON vagas (empresa_id);

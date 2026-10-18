@@ -1,3 +1,5 @@
+import { lerSessao, limparSessao } from "./auth";
+
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 /**
@@ -37,13 +39,22 @@ function traduzirErro(status, corpo) {
   return new ErroApi(texto);
 }
 
-export async function post(rota, dados) {
+/**
+ * Faz a requisição e devolve o JSON da resposta.
+ * Se houver alguém logado, o token vai junto no cabeçalho Authorization;
+ * é com ele que a API sabe qual empresa publica e qual estudante se candidata.
+ */
+async function requisitar(metodo, rota, dados) {
+  const sessao = lerSessao();
+  const cabecalhos = { "Content-Type": "application/json" };
+  if (sessao?.token) cabecalhos.Authorization = `Bearer ${sessao.token}`;
+
   let resposta;
   try {
     resposta = await fetch(`${API_URL}${rota}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(dados),
+      method: metodo,
+      headers: cabecalhos,
+      body: dados === undefined ? undefined : JSON.stringify(dados),
     });
   } catch {
     throw new ErroApi("Não foi possível falar com o servidor. A API está rodando?");
@@ -52,7 +63,21 @@ export async function post(rota, dados) {
   const corpo = await resposta.json().catch(() => null);
 
   if (!resposta.ok) {
-    throw traduzirErro(resposta.status, corpo);
+    // token vencido ou inválido: a sessão guardada não serve mais
+    if (resposta.status === 401 && sessao) limparSessao();
+    const erro = traduzirErro(resposta.status, corpo);
+    erro.status = resposta.status;
+    throw erro;
   }
   return corpo;
+}
+
+export const post = (rota, dados) => requisitar("POST", rota, dados);
+
+/** GET com filtros opcionais: get("/vagas", { tipo: "Estágio" }). Valores vazios são ignorados. */
+export function get(rota, filtros = {}) {
+  const busca = new URLSearchParams(
+    Object.entries(filtros).filter(([, valor]) => valor !== "" && valor != null)
+  ).toString();
+  return requisitar("GET", busca ? `${rota}?${busca}` : rota);
 }

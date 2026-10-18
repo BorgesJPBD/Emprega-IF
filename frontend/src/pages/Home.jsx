@@ -6,7 +6,7 @@ import {
   UserRound, Wrench,
 } from "lucide-react";
 import CartaoVaga from "../componentes/CartaoVaga";
-import { VAGAS } from "../dados/vagas";
+import { buscarVagas } from "../vagas";
 
 /* ---------- dados mockados ---------- */
 
@@ -159,7 +159,14 @@ export default function Home() {
   const [refPassos, passosVisiveis] = useVisivel(0.3);
   const [filtro, setFiltro] = useState("Todas");
 
-  const vagas = VAGAS.filter((v) => filtro === "Todas" || v.tipo === filtro).slice(0, 3);
+  const [todasVagas, setTodasVagas] = useState([]);
+
+  // vagas reais do banco; se a API estiver fora do ar a seção só fica vazia
+  useEffect(() => {
+    buscarVagas({ limite: 30 }).then(setTodasVagas).catch(() => setTodasVagas([]));
+  }, []);
+
+  const vagas = todasVagas.filter((v) => filtro === "Todas" || v.tipo === filtro).slice(0, 3);
 
   return (
     <main>
@@ -314,6 +321,9 @@ export default function Home() {
               <CartaoVaga key={`${filtro}-${vaga.id}`} vaga={vaga} indice={i} />
             ))}
           </div>
+          {vagas.length === 0 && (
+            <p className="mt-2 text-sm text-neutral-500">Nenhuma vaga aberta deste tipo no momento.</p>
+          )}
         </div>
       </section>
     </main>

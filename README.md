@@ -37,9 +37,12 @@ acadêmico do Instituto Federal.
 | Autenticação (Login, Figura 5) | completo |
 | Tela de Cadastro de Estudante (Figura 3) | completa |
 | Cabeçalho e rodapé do site | completos |
-| Página Inicial (Figura 2) | placeholder |
-| Publicar Vaga (UC03, Figura 4) | placeholder |
-| Vagas recomendadas (UC02) | placeholder |
+| Cadastro de Empresa | completo |
+| Página Inicial (Figura 2) | completa, com vagas vindas do banco |
+| Listagem e detalhe de vagas | completos, com filtros no banco |
+| Publicar Vaga (UC03, Figura 4) | completo (exige login de empresa) |
+| Candidatura a vaga | completa (exige login de estudante) |
+| Vagas recomendadas (UC02) | pendente |
 
 ---
 
@@ -64,18 +67,24 @@ emprega-if/
 │   ├── main.py             aplicação, CORS e lifespan do pool
 │   ├── config.py           variáveis de ambiente
 │   ├── sql/schema.sql      criação física do banco (seção 4.8.2)
+│   ├── sql/dados_exemplo.sql  6 empresas e 6 vagas para desenvolvimento
 │   └── app/
 │       ├── db.py           único ponto que conversa com o banco
 │       ├── schemas.py      valida o que entra, define o que sai
 │       ├── seguranca.py    hash bcrypt e token JWT
+│       ├── dependencias.py quem está logado (exigir_empresa, exigir_estudante)
 │       ├── validadores.py  regras de domínio (CPF, vínculo com o IF)
 │       └── routers/        um arquivo por caso de uso
 │           ├── estudantes.py   UC01
+│           ├── empresas.py     cadastro de empresa
+│           ├── vagas.py        listagem e UC03
+│           ├── candidaturas.py candidatura a vaga
 │           └── auth.py         login
 ├── frontend/               interface web (React + Vite)
     └── src/
         ├── api.js          todo fetch passa por aqui
         ├── auth.js         sessão do usuário no navegador
+        ├── vagas.js        busca as vagas na API e adapta para as telas
         ├── componentes/    peças reaproveitadas
         └── pages/          uma tela por arquivo
 ├── docker-compose.yml      sobe banco + API + frontend juntos
@@ -160,12 +169,35 @@ Se preferir fazer tudo manualmente, os passos estão em `scripts/setup.ps1`, que
 
 ### 3.1 Telas disponíveis
 
-- <http://localhost:5173/cadastro/estudante>
+- <http://localhost:5173/> — página inicial
+- <http://localhost:5173/vagas> — vagas abertas, com filtros
+- <http://localhost:5173/vagas/nova> — publicar vaga (login de empresa)
+- <http://localhost:5173/cadastro/estudante> e <http://localhost:5173/cadastro/empresa>
 - <http://localhost:5173/login>
 
-As demais rotas existem, mas exibem um aviso de tela não implementada.
+O banco já nasce com 6 empresas e 6 vagas de exemplo (`sql/dados_exemplo.sql`).
+Todas as empresas de exemplo usam a senha `empresa123` — por exemplo,
+`rh@techsolutions.exemplo.com` / `empresa123` para testar a publicação de vagas.
 
-### 3.2 Problemas comuns
+### 3.2 Atualizando um banco que já existe
+
+O `schema.sql` pode ser rodado de novo sem perder dados: ele só cria o que
+falta (tabelas e colunas novas). Depois de puxar alterações no banco:
+
+```bash
+# Docker
+docker compose exec db psql -U postgres -d emprega_if -f /docker-entrypoint-initdb.d/01_schema.sql
+docker compose exec db psql -U postgres -d emprega_if -f /docker-entrypoint-initdb.d/02_dados_exemplo.sql
+
+# Instalação local (dentro da pasta backend)
+psql -U postgres -d emprega_if -f sql/schema.sql
+psql -U postgres -d emprega_if -f sql/dados_exemplo.sql
+```
+
+Se preferir começar do zero no Docker: `docker compose down -v` e depois
+`docker compose up` (isso apaga todos os cadastros).
+
+### 3.3 Problemas comuns
 
 | Sintoma | Causa |
 |---|---|
@@ -278,14 +310,27 @@ Cada exceção prevista no UC01 tem uma resposta HTTP correspondente:
 |---|---|---|
 | POST | `/estudantes` | cadastra o perfil do estudante (UC01) |
 | POST | `/auth/login` | autentica estudante ou empresa e devolve o JWT |
+| POST | `/empresas` | cadastra o perfil da empresa |
+| GET | `/vagas` | vagas abertas; filtros `tipo`, `area`, `localizacao` |
+| GET | `/vagas/{id}` | detalhes de uma vaga |
+| GET | `/vagas/{id}/parecidas` | vagas abertas do mesmo tipo ou área |
+| POST | `/vagas` | publica vaga — **empresa logada** (UC03) |
+| POST | `/candidaturas` | candidata-se a uma vaga — **estudante logado** |
+| GET | `/candidaturas/minhas` | candidaturas do estudante logado |
 | GET | `/health` | verifica a conexão com o banco |
+
+Rotas marcadas como logadas exigem o cabeçalho `Authorization: Bearer <token>`
+(o `api.js` do frontend envia sozinho). Sem token ou com token vencido: 401;
+com o papel errado (estudante tentando publicar, por exemplo): 403.
 
 ---
 
 ## 9. Próximos passos
 
 - Página Inicial (Figura 2) e Publicar Vaga (UC03, Figura 4)
-- Middleware de validação do JWT, protegendo as rotas por papel
+- Painel da empresa: listar as próprias vagas e ver os candidatos
+- Tela "Minhas candidaturas" para o estudante (o endpoint já existe)
+- Cabeçalho mostrando quem está logado, com botão de sair
 - E-mail de confirmação do cadastro (UC01, passos 5 e 6) — a coluna `ativo` já
   existe no banco
 - Filtragem de vagas e algoritmo de recomendação (UC02)

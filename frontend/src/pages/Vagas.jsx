@@ -1,8 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronDown, Search, SearchX } from "lucide-react";
 
 import CartaoVaga from "../componentes/CartaoVaga";
-import { VAGAS } from "../dados/vagas";
+import { buscarVagas } from "../vagas";
 
 const ESTILO = `
 @keyframes entra{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
@@ -10,12 +10,10 @@ const ESTILO = `
 @media (prefers-reduced-motion:reduce){.anima-entra{animation:none}}
 `;
 
-const opcoes = (campo) =>
-  [...new Set(VAGAS.map((v) => v[campo]))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+/* opções dos filtros: só o que existe nas vagas abertas */
+const opcoes = (vagas, campo) =>
+  [...new Set(vagas.map((v) => v[campo]))].sort((a, b) => a.localeCompare(b, "pt-BR"));
 
-const TIPOS = opcoes("tipo");
-const AREAS = opcoes("area");
-const LOCAIS = opcoes("local");
 const VAZIO = { tipo: "", area: "", local: "" };
 
 function Seletor({ rotulo, todas, valor, lista, onChange }) {
@@ -40,28 +38,47 @@ function Seletor({ rotulo, todas, valor, lista, onChange }) {
 export default function Vagas() {
   const [rascunho, setRascunho] = useState(VAZIO); // o que está nos selects
   const [filtros, setFiltros] = useState(VAZIO);   // o que foi aplicado em "Buscar vagas"
+  const [todas, setTodas] = useState([]);          // sem filtro, para montar as opções
+  const [lista, setLista] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState("");
 
-  const lista = useMemo(
-    () =>
-      VAGAS.filter(
-        (v) =>
-          (!filtros.tipo || v.tipo === filtros.tipo) &&
-          (!filtros.area || v.area === filtros.area) &&
-          (!filtros.local || v.local === filtros.local)
-      ),
-    [filtros]
-  );
+  // primeira carga: todas as vagas abertas
+  useEffect(() => {
+    buscarVagas()
+      .then((vagas) => { setTodas(vagas); setLista(vagas); })
+      .catch((e) => setErro(e.message))
+      .finally(() => setCarregando(false));
+  }, []);
+
+  // a filtragem acontece no banco (GET /vagas?tipo=...&area=...&localizacao=...)
+  async function aplicar(novos) {
+    setFiltros(novos);
+    setCarregando(true);
+    setErro("");
+    try {
+      setLista(await buscarVagas({ tipo: novos.tipo, area: novos.area, localizacao: novos.local }));
+    } catch (e) {
+      setErro(e.message);
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  const TIPOS = opcoes(todas, "tipo");
+  const AREAS = opcoes(todas, "area");
+  const LOCAIS = opcoes(todas, "local");
 
   const alterar = (campo) => (valor) => setRascunho((atual) => ({ ...atual, [campo]: valor }));
 
   function buscar(evento) {
     evento.preventDefault();
-    setFiltros(rascunho);
+    aplicar(rascunho);
   }
 
   function limpar() {
     setRascunho(VAZIO);
-    setFiltros(VAZIO);
+    aplicar(VAZIO);
   }
 
   return (
@@ -88,10 +105,20 @@ export default function Vagas() {
       </form>
 
       <p className="mt-8 text-xs text-neutral-500" aria-live="polite">
-        {lista.length === 1 ? "1 vaga encontrada" : `${lista.length} vagas encontradas`}
+        {carregando
+          ? "Carregando vagas..."
+          : lista.length === 1 ? "1 vaga encontrada" : `${lista.length} vagas encontradas`}
       </p>
 
-      {lista.length > 0 ? (
+      {erro ? (
+        <p role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{erro}</p>
+      ) : carregando ? (
+        <div className="mt-4 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3" aria-hidden="true">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="h-56 animate-pulse rounded-2xl border border-neutral-200 bg-white" />
+          ))}
+        </div>
+      ) : lista.length > 0 ? (
         <div key={JSON.stringify(filtros)} className="mt-4 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
           {lista.map((vaga, i) => (
             <CartaoVaga key={vaga.id} vaga={vaga} indice={i} />
@@ -100,8 +127,14 @@ export default function Vagas() {
       ) : (
         <div className="anima-entra mt-4 flex flex-col items-center rounded-2xl border border-dashed border-neutral-300 bg-white px-6 py-16 text-center">
           <SearchX className="size-8 text-neutral-400" />
-          <h2 className="mt-4 text-base font-medium text-neutral-900">Nenhuma vaga com esses filtros</h2>
-          <p className="mt-1 text-sm text-neutral-500">Troque o tipo, a área ou o local para ver mais oportunidades.</p>
+          <h2 className="mt-4 text-base font-medium text-neutral-900">
+            {todas.length ? "Nenhuma vaga com esses filtros" : "Nenhuma vaga aberta no momento"}
+          </h2>
+          <p className="mt-1 text-sm text-neutral-500">
+            {todas.length
+              ? "Troque o tipo, a área ou o local para ver mais oportunidades."
+              : "Assim que uma empresa publicar uma vaga, ela aparece aqui."}
+          </p>
           <button
             type="button"
             onClick={limpar}

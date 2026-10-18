@@ -32,3 +32,15 @@ def criar_token(sujeito: str, papel: str, minutos: int | None = None) -> str:
     )
     payload = {"sub": sujeito, "papel": papel, "exp": expira_em}
     return jwt.encode(payload, settings.SECRET_KEY, algorithm=settings.JWT_ALGORITMO)
+
+
+def ler_token(token: str) -> dict | None:
+    """Devolve o conteúdo do token, ou None se ele for inválido ou
+    estiver vencido. A assinatura é conferida com a SECRET_KEY: um token
+    alterado no navegador não passa daqui."""
+    try:
+        return jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[settings.JWT_ALGORITMO]
+        )
+    except jwt.PyJWTError:
+        return None
