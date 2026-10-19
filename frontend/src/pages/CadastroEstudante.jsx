@@ -219,7 +219,10 @@ export default function CadastroEstudante() {
             onChange={(e) => alterar("aceite_termos", e.target.checked)}
           />
           <span>
-            Aceito os termos de uso e a política de privacidade
+            Aceito os{" "}
+            <Link to="/termos" target="_blank" rel="noopener" className="underline">termos de uso</Link>{" "}
+            e a{" "}
+            <Link to="/privacidade" target="_blank" rel="noopener" className="underline">política de privacidade</Link>
             {erros.aceite_termos && (
               <span className="campo__erro"> — {erros.aceite_termos}</span>
             )}

@@ -15,6 +15,9 @@ import PublicarVaga from "./pages/PublicarVaga";
 import DetalheVaga from "./pages/DetalheVaga";
 import PainelEmpresa from "./pages/PainelEmpresa";
 import MinhasCandidaturas from "./pages/MinhasCandidaturas";
+import QuemSomos from "./pages/QuemSomos";
+import Termos from "./pages/Termos";
+import Privacidade from "./pages/Privacidade";
 
 /** Telas ainda não construídas. Cada uma sai daqui quando for implementada. */
 function EmBreve({ titulo, figura }) {
@@ -57,6 +60,9 @@ export default function App() {
           <Route path="/vagas/:id" element={<DetalheVaga />} />
           <Route path="/painel" element={<PainelEmpresa />} />
           <Route path="/minhas-candidaturas" element={<MinhasCandidaturas />} />
+          <Route path="/quem-somos" element={<QuemSomos />} />
+          <Route path="/termos" element={<Termos />} />
+          <Route path="/privacidade" element={<Privacidade />} />
           <Route path="*" element={<EmBreve titulo="Página não encontrada" figura="404" />} />
         </Routes>
       </div>

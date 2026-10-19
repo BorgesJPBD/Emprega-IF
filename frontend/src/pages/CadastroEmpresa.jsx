@@ -347,13 +347,15 @@ export default function CadastroEmpresa() {
           />
           <span>
             Aceito os{" "}
-            <Link className="font-medium text-neutral-900 underline" to="/termos">
+            <Link className="font-medium text-neutral-900 underline" to="/termos" target="_blank" rel="noopener">
               termos de uso
             </Link>{" "}
             e{" "}
             <Link
               className="font-medium text-neutral-900 underline"
               to="/privacidade"
+              target="_blank"
+              rel="noopener"
             >
               política de privacidade
             </Link>

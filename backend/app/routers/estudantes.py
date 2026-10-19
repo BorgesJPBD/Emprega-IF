@@ -1,9 +1,10 @@
 """UC01 - Cadastrar Perfil de Estudante."""
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from psycopg import errors
 
 from app.db import execute, query_one
+from app.notificacoes import boas_vindas
 from app.schemas import EstudanteCriar, EstudanteResposta
 from app.seguranca import gerar_hash_senha
 
@@ -25,7 +26,7 @@ SQL_INSERIR = """
     status_code=status.HTTP_201_CREATED,
     summary="Cadastrar perfil de estudante",
 )
-async def cadastrar_estudante(dados: EstudanteCriar):
+async def cadastrar_estudante(dados: EstudanteCriar, tarefas: BackgroundTasks):
     """Cria o perfil do estudante.
 
     As exceções previstas no UC01 viram respostas HTTP:
@@ -74,4 +75,6 @@ async def cadastrar_estudante(dados: EstudanteCriar):
 
     # UC01 passos 5 e 6 (e-mail de confirmação e ativação por link) ficam
     # para a próxima etapa; por ora o cadastro já nasce ativo.
+    # e-mail de boas-vindas em segundo plano: a tela não espera o envio
+    tarefas.add_task(boas_vindas, estudante["email_if"], estudante["nome"], "estudante")
     return estudante

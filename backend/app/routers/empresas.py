@@ -1,10 +1,11 @@
 """Empresas: cadastro e painel da empresa logada."""
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from psycopg import errors
 
 from app.db import execute, query_all, query_one
 from app.dependencias import Usuario, exigir_empresa
+from app.notificacoes import boas_vindas
 from app.schemas import EmpresaCriar, EmpresaResposta, PainelVaga
 from app.seguranca import gerar_hash_senha
 
@@ -61,7 +62,7 @@ async def minhas_vagas(empresa: Usuario = Depends(exigir_empresa)):
     status_code=status.HTTP_201_CREATED,
     summary="Cadastrar perfil de empresa",
 )
-async def cadastrar_empresa(dados: EmpresaCriar):
+async def cadastrar_empresa(dados: EmpresaCriar, tarefas: BackgroundTasks):
     existente = await query_one(
         "SELECT cnpj, email_contato FROM empresas WHERE cnpj = %s OR email_contato = %s",
         (dados.cnpj, dados.email_contato),
@@ -104,4 +105,6 @@ async def cadastrar_empresa(dados: EmpresaCriar):
             status_code=422,
             detail=[{"loc": ["body", "setor"], "msg": "Selecione um setor de atuação."}],
         )
+    nome = empresa["nome_fantasia"] or empresa["razao_social"]
+    tarefas.add_task(boas_vindas, empresa["email_contato"], nome, "empresa")
     return empresa

@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.db import abrir_pool, executar_script, fechar_pool, query_one
 from app.migracoes import aplicar_migrations
+from app.notificacoes import email_configurado
 from app.routers import auth, candidaturas, empresas, estatisticas, estudantes, vagas
 from config import settings
 
@@ -57,6 +58,11 @@ app.include_router(estatisticas.router)
 
 @app.get("/health", tags=["Infra"])
 async def health():
-    """Confirma que a API conversa com o PostgreSQL."""
+    """Confirma que a API conversa com o PostgreSQL e diz se o envio de
+    e-mail está configurado (sem mostrar a chave)."""
     linha = await query_one("SELECT version() AS versao")
-    return {"status": "ok", "postgres": linha["versao"]}
+    return {
+        "status": "ok",
+        "postgres": linha["versao"],
+        "email_configurado": email_configurado(),
+    }

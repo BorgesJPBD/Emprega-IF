@@ -74,7 +74,7 @@ def _modelo(titulo: str, paragrafos: list[str], botao_texto: str, botao_link: st
       <p style="margin:24px 0 8px"><a href="{botao_link}" style="display:inline-block;background:#18181b;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:10px;font-size:14px;font-weight:bold">{botao_texto}</a></p>
     </td></tr>
     <tr><td style="padding:16px 28px;border-top:1px solid #f4f4f5;font-size:12px;color:#a1a1aa">
-      Emprega-IF · Projeto de extensão do IFMS. Você recebeu este e-mail porque se candidatou a uma vaga na plataforma.
+      Emprega-IF · Projeto de extensão do IFMS. Você recebeu este e-mail porque tem uma conta na plataforma.
     </td></tr>
   </table>
 </td></tr></table>
@@ -134,3 +134,39 @@ async def avisar_mudanca_status(email: str, nome: str, vaga: str, empresa: str, 
         + f"\n\nVeja em: {link}\n\nEmprega-IF · Projeto de extensão do IFMS"
     )
     await enviar_email(email, nome, f"{titulo} · {vaga}", html, texto)
+
+
+async def boas_vindas(email: str, nome: str, papel: str) -> None:
+    """Enviado logo após o cadastro de estudante ou de empresa."""
+    if papel == "empresa":
+        saudacao = f"Olá, equipe {escape(nome)}!"
+        texto_principal = (
+            "O cadastro da sua empresa no Emprega-IF foi concluído. Agora você já pode "
+            "publicar vagas de estágio e jovem aprendiz para estudantes do IF e "
+            "acompanhar os candidatos pelo painel."
+        )
+        botao, link = "Publicar a primeira vaga", f"{settings.SITE_URL}/vagas/nova"
+        nome_texto = nome
+    else:
+        saudacao = f"Olá, {escape(nome.split()[0])}!"
+        texto_principal = (
+            "Seu cadastro no Emprega-IF foi concluído. Agora você já pode se candidatar "
+            "às vagas de estágio e jovem aprendiz e acompanhar cada etapa pela plataforma."
+        )
+        botao, link = "Ver vagas abertas", f"{settings.SITE_URL}/vagas"
+        nome_texto = nome.split()[0]
+    html = _modelo(
+        "Cadastro concluído",
+        [saudacao, texto_principal,
+         f"Para entrar, use o e-mail <strong>{escape(email)}</strong> e a senha que você criou."],
+        botao, link,
+    )
+    texto = (
+        f"Olá, {nome_texto}!\n\n{texto_principal}\n\nPara entrar, use o e-mail {email} "
+        f"e a senha que você criou.\n\n{link}\n\nEmprega-IF · Projeto de extensão do IFMS"
+    )
+    await enviar_email(email, nome, "Bem-vindo ao Emprega-IF", html, texto)
+
+
+def email_configurado() -> bool:
+    return bool(settings.BREVO_API_KEY and settings.EMAIL_REMETENTE)

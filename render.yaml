@@ -48,6 +48,8 @@ services:
     envVars:
       - key: VITE_API_URL          # endereço da API acima
         value: https://emprega-if-api.onrender.com
+      - key: VITE_EMAIL_CONTATO    # e-mail exibido em Quem somos, Termos e Privacidade (opcional)
+        sync: false
     routes:
       # sem isto, recarregar /vagas ou /login daria "Not Found"
       - type: rewrite
