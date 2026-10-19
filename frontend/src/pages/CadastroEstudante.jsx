@@ -134,9 +134,9 @@ export default function CadastroEstudante() {
 
           <Campo
             nome="email_if"
-            rotulo="E-mail institucional"
+            rotulo="E-mail"
             type="email"
-            placeholder="seu.nome@ifms.edu.br"
+            placeholder="seu.nome@email.com"
             autoComplete="email"
             value={form.email_if}
             erro={erros.email_if}

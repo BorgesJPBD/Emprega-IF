@@ -17,7 +17,7 @@ const CONTEUDO = {
     {
       titulo: "Crie seu perfil",
       texto:
-        "Informe seu curso, período e e-mail institucional. Leva menos de dois " +
+        "Informe seu curso, período e e-mail. Leva menos de dois " +
         "minutos e não exige experiência anterior.",
     },
     {
@@ -43,8 +43,8 @@ const CONTEUDO = {
     {
       titulo: "Exclusivo do Instituto Federal",
       texto:
-        "O cadastro é validado pelo e-mail institucional, então você concorre " +
-        "apenas com outros estudantes do IF.",
+        "A plataforma é feita para estudantes do IF, com vagas pensadas para " +
+        "quem está no curso agora.",
     },
     {
       titulo: "Tudo num lugar só",
@@ -64,7 +64,7 @@ const CONTEUDO = {
       pergunta: "Quem pode se cadastrar?",
       resposta:
         "Estudantes regularmente matriculados no Instituto Federal, nos níveis " +
-        "médio, técnico e superior. O vínculo é conferido pelo e-mail institucional.",
+        "médio, técnico e superior.",
     },
     {
       pergunta: "A plataforma cobra alguma coisa?",

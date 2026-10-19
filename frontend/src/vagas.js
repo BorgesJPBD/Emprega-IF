@@ -8,7 +8,7 @@ import { get } from "./api";
    formato que as telas usam desde o protótipo — assim CartaoVaga, Home,
    Vagas e DetalheVaga continuam lendo os mesmos campos de antes. */
 
-const ICONES = {
+export const ICONES = {
   Tecnologia: Monitor,
   Administrativo: FileText,
   Marketing: TrendingUp,
@@ -21,7 +21,7 @@ const ICONES = {
 
 /* Um toque de cor por área, só no ícone da vaga. Classes escritas por
    inteiro para o Tailwind encontrar. */
-const CORES = {
+export const CORES = {
   Tecnologia: "bg-sky-50 text-sky-700",
   Administrativo: "bg-amber-50 text-amber-700",
   Marketing: "bg-rose-50 text-rose-700",

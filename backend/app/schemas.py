@@ -61,7 +61,7 @@ class EstudanteCriar(BaseModel):
     @classmethod
     def validar_vinculo(cls, valor: str) -> str:
         if not email_institucional(valor):
-            raise ValueError("Use seu e-mail institucional do IF.")
+            raise ValueError("Este e-mail não é aceito no cadastro. Use o e-mail do IF.")
         return valor.lower()
 
     @field_validator("telefone")

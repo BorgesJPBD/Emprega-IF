@@ -18,7 +18,7 @@ export default function Privacidade() {
           titulo: "Quais dados coletamos",
           conteudo: (
             <>
-              <p><strong>Estudantes:</strong> nome completo, CPF, e-mail institucional, telefone (opcional), instituição, curso e período.</p>
+              <p><strong>Estudantes:</strong> nome completo, CPF, e-mail, telefone (opcional), instituição, curso e período.</p>
               <p><strong>Empresas:</strong> razão social, nome fantasia, CNPJ, setor de atuação, e-mail de contato, telefone e endereço (opcionais).</p>
               <p><strong>Uso da plataforma:</strong> vagas publicadas, candidaturas enviadas, data de cada candidatura e o histórico de andamento.</p>
               <p>A senha nunca é guardada: o banco armazena apenas um código irreversível gerado a partir dela (<em>hash</em> bcrypt).</p>
@@ -30,7 +30,6 @@ export default function Privacidade() {
           conteudo: (
             <ul>
               <li>Criar e manter a sua conta e permitir o login.</li>
-              <li>Verificar o vínculo do estudante com o IF, pelo domínio do e-mail institucional.</li>
               <li>Exibir vagas e registrar candidaturas.</li>
               <li>Enviar e-mails sobre a sua conta e as suas candidaturas (confirmação e mudanças de andamento).</li>
               <li>Mostrar números gerais da plataforma, sempre em totais, sem identificar ninguém.</li>

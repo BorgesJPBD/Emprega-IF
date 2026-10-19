@@ -1,12 +1,22 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Check, Clock, MailCheck, MapPin, Search, UserPlus, CalendarCheck } from "lucide-react";
+import { ArrowRight, BadgeCheck, CalendarCheck, Search, Sparkles, UserPlus } from "lucide-react";
 
 import CartaoVaga from "../componentes/CartaoVaga";
+import Vitrine from "../componentes/Vitrine";
 import { get } from "../api";
-import { COR_TIPO, buscarVagas } from "../vagas";
+import { CORES, ICONES, buscarVagas } from "../vagas";
 
 const FILTROS = ["Todas", "Estágio", "Jovem aprendiz"];
+
+/* Logo abaixo dos botões do topo: o que o estudante ganha, em poucas palavras. */
+const VANTAGENS = [
+  { Icone: BadgeCheck, texto: "Gratuito para estudantes" },
+  { Icone: Sparkles, texto: "Sem exigir experiência" },
+];
+
+/* Faixa que desliza no fim do topo: as áreas que têm vagas na plataforma. */
+const AREAS = Object.keys(ICONES);
 
 /* Números reais, contados no banco (GET /estatisticas -> view vw_estatisticas). */
 const NUMEROS = [
@@ -22,28 +32,18 @@ const PASSOS = [
   { Icone: CalendarCheck, titulo: "Candidate-se e acompanhe", texto: "Um clique para se candidatar. A confirmação chega por e-mail e cada etapa aparece no seu painel." },
 ];
 
-/* Etapas da prévia do topo: a mesma sequência que o estudante vê em
-   "Minhas candidaturas". Elas aparecem uma depois da outra ao abrir a página
-   (é a única animação automática da Home). */
-const ETAPAS = [
-  { Icone: Check, texto: "Candidatura enviada", detalhe: "agora mesmo" },
-  { Icone: MailCheck, texto: "Confirmação enviada para o seu e-mail", detalhe: "no mesmo minuto" },
-  { Icone: null, texto: "Aguardando a resposta da empresa", detalhe: "você é avisado por e-mail" },
-];
-
 const ESTILO = `
 @keyframes entra{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
-@keyframes etapa{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
 .anima-entra{animation:entra .7s cubic-bezier(.2,.7,.2,1) both}
-.anima-etapa{animation:etapa .5s cubic-bezier(.2,.7,.2,1) both}
-@media (prefers-reduced-motion:reduce){.anima-entra,.anima-etapa{animation:none}}
+@keyframes faixa{to{transform:translateX(-50%)}}
+.anima-faixa{animation:faixa 38s linear infinite}
+.faixa:hover .anima-faixa{animation-play-state:paused}
+@media (prefers-reduced-motion:reduce){.anima-entra,.anima-faixa{animation:none}}
 `;
 
 const REDUZ =
   typeof window !== "undefined" &&
   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-const atraso = (ms) => ({ animationDelay: `${ms}ms` });
 
 function useVisivel(limiar = 0.35) {
   const ref = useRef(null);
@@ -81,67 +81,6 @@ function Contador({ alvo, ativo }) {
   return <>{n.toLocaleString("pt-BR")}</>;
 }
 
-/** Prévia do produto: uma vaga real do banco e a candidatura andando. */
-function Previa({ vaga }) {
-  if (!vaga) {
-    return <div className="aspect-[4/5] w-full max-w-md rounded-[28px] bg-neutral-900 lg:ml-auto" aria-hidden="true" />;
-  }
-  const { Icone } = vaga;
-  return (
-    <figure className="anima-entra w-full max-w-md rounded-[28px] bg-neutral-900 p-5 sm:p-7 lg:ml-auto" style={atraso(250)}>
-      <figcaption className="sr-only">Exemplo de candidatura a uma vaga da plataforma</figcaption>
-
-      <div className="rounded-2xl bg-white p-5">
-        <div className="flex items-start justify-between gap-3">
-          <span className={`grid size-10 place-items-center rounded-xl ${vaga.cor}`}>
-            <Icone className="size-5" />
-          </span>
-          <span className={`rounded-full border px-2.5 py-0.5 text-[11px] ${COR_TIPO[vaga.tipo] ?? "border-neutral-200 text-neutral-600"}`}>
-            {vaga.tipo}
-          </span>
-        </div>
-        <p className="mt-4 text-lg font-semibold leading-snug text-neutral-900" style={{ fontFamily: "var(--font-titulo)" }}>
-          {vaga.titulo}
-        </p>
-        <p className="text-sm text-neutral-500">{vaga.empresa}</p>
-        <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-xs text-neutral-500">
-          <span className="inline-flex items-center gap-1.5"><MapPin className="size-3.5" />{vaga.local}</span>
-          <span className="inline-flex items-center gap-1.5"><Clock className="size-3.5" />{vaga.horario}</span>
-        </div>
-        <div className="mt-4 flex items-center justify-between border-t border-neutral-100 pt-4">
-          <span className="text-sm font-medium text-neutral-900">
-            {vaga.valor ? `R$ ${vaga.valor.toLocaleString("pt-BR")} / mês` : "A combinar"}
-          </span>
-          <span className="inline-flex items-center gap-1.5 rounded-lg bg-marca-600 px-3 py-1.5 text-xs font-medium text-white">
-            <Check className="size-3.5" /> Candidatado
-          </span>
-        </div>
-      </div>
-
-      <p className="mt-6 text-sm font-medium text-white">Sua candidatura</p>
-      <ol className="mt-3 space-y-3">
-        {ETAPAS.map(({ Icone: IconeEtapa, texto, detalhe }, i) => (
-          <li key={texto} className="anima-etapa flex items-start gap-3" style={atraso(900 + i * 700)}>
-            {IconeEtapa ? (
-              <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-marca-600 text-white">
-                <IconeEtapa className="size-3" strokeWidth={3} />
-              </span>
-            ) : (
-              <span className="relative mt-0.5 grid size-5 shrink-0 place-items-center rounded-full border border-marca-500/60">
-                <span className="size-1.5 rounded-full bg-marca-500 motion-safe:animate-pulse" />
-              </span>
-            )}
-            <span>
-              <span className="block text-sm text-neutral-100">{texto}</span>
-              <span className="block text-xs text-neutral-500">{detalhe}</span>
-            </span>
-          </li>
-        ))}
-      </ol>
-    </figure>
-  );
-}
-
 export default function Home() {
   const [refNumeros, numerosVisiveis] = useVisivel();
   const [filtro, setFiltro] = useState("Todas");
@@ -155,7 +94,6 @@ export default function Home() {
   }, []);
 
   const vagas = todasVagas.filter((v) => filtro === "Todas" || v.tipo === filtro).slice(0, 3);
-  const destaque = todasVagas.find((v) => v.tipo === "Estágio") ?? todasVagas[0];
 
   return (
     <main>
@@ -163,7 +101,7 @@ export default function Home() {
 
       {/* ---------- topo: o que é + prévia do produto ---------- */}
       <section className="bg-white">
-        <div className="mx-auto grid max-w-screen-xl items-center gap-12 px-6 py-16 sm:px-8 lg:grid-cols-[1.1fr_1fr] lg:py-24">
+        <div className="mx-auto grid max-w-screen-xl items-center gap-12 px-6 py-14 sm:px-8 lg:grid-cols-[1.1fr_1fr] lg:py-20">
           <div className="anima-entra">
             <span className="inline-flex items-center gap-2 rounded-full border border-marca-200 bg-marca-50 px-3 py-1 text-xs font-medium text-marca-800">
               <span className="size-1.5 rounded-full bg-marca-600" aria-hidden="true" />
@@ -193,9 +131,42 @@ export default function Home() {
                 Sou empresa
               </Link>
             </div>
+
+            <ul className="mt-10 flex flex-wrap gap-x-6 gap-y-3 text-sm text-neutral-600">
+              {VANTAGENS.map(({ Icone, texto }) => (
+                <li key={texto} className="inline-flex items-center gap-2">
+                  <Icone className="size-4 text-marca-600" /> {texto}
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <Previa vaga={destaque} />
+          <Vitrine vagas={todasVagas} total={numeros?.vagas_abertas} />
+        </div>
+
+        {/* faixa de áreas: a lista aparece duas vezes para o deslize não ter emenda */}
+        <div className="faixa border-t border-neutral-200 py-5">
+          <div className="mx-auto flex max-w-screen-xl items-center gap-6 px-6 sm:px-8">
+            <p className="hidden shrink-0 text-xs font-medium uppercase tracking-wider text-neutral-400 sm:block">
+              Vagas em áreas como
+            </p>
+            <div className="relative min-w-0 flex-1 overflow-hidden [mask-image:linear-gradient(to_right,transparent,#000_8%,#000_92%,transparent)]">
+              <ul className="anima-faixa flex w-max gap-3">
+                {[...AREAS, ...AREAS].map((area, i) => {
+                  const Icone = ICONES[area];
+                  return (
+                    <li key={i} aria-hidden={i >= AREAS.length}
+                      className="inline-flex shrink-0 items-center gap-2 rounded-full border border-neutral-200 bg-white py-1.5 pl-1.5 pr-4 text-sm text-neutral-700">
+                      <span className={`grid size-7 place-items-center rounded-full ${CORES[area]}`}>
+                        <Icone className="size-3.5" />
+                      </span>
+                      {area}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          </div>
         </div>
       </section>
 

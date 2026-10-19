@@ -48,7 +48,7 @@ class Settings:
     # Validação de vínculo com o IF (UC01, passo 3).
     # Vazio = aceita qualquer domínio (útil para testar).
     DOMINIOS_EMAIL_PERMITIDOS: list[str] = _lista(
-        os.getenv("DOMINIOS_EMAIL_PERMITIDOS", "ifms.edu.br,estudante.ifms.edu.br")
+        os.getenv("DOMINIOS_EMAIL_PERMITIDOS", "")
     )
 
 

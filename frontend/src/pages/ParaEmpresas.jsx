@@ -75,7 +75,7 @@ const CONTEUDO = {
     {
       pergunta: "Quem vê as vagas publicadas?",
       resposta:
-        "Apenas estudantes com cadastro validado por e-mail institucional do IF.",
+        "Estudantes do IF, com curso, período e contato já no perfil.",
     },
     {
       pergunta: "Posso encerrar uma vaga antes do prazo?",

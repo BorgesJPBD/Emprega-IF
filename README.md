@@ -209,7 +209,7 @@ Se preferir começar do zero no Docker: `docker compose down -v` e depois
 | A alteração no `.env` não fez efeito | o Vite e o uvicorn só leem o `.env` ao iniciar; reinicie |
 | `psql: command not found` no Windows | falta `C:\Program Files\PostgreSQL\<versão>\bin` no PATH |
 | `port is already allocated` no Docker | já existe algo usando a porta 5432, 8000 ou 5173 — provavelmente o PostgreSQL instalado na máquina |
-| O e-mail do cadastro é recusado | por padrão só aceita domínio do IF; deixe `DOMINIOS_EMAIL_PERMITIDOS=` vazio no `.env` |
+| O e-mail do cadastro é recusado | `DOMINIOS_EMAIL_PERMITIDOS` está definida no `.env` e limita os domínios; apague a linha para aceitar qualquer e-mail |
 
 ---
 

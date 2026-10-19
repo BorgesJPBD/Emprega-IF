@@ -28,7 +28,7 @@ export default function Termos() {
           titulo: "Quem pode usar",
           conteudo: (
             <ul>
-              <li><strong>Estudantes</strong> com vínculo ativo com o IF, comprovado pelo e-mail institucional.</li>
+              <li><strong>Estudantes</strong> com matrícula ativa no IF.</li>
               <li><strong>Empresas</strong> com CNPJ válido e legalmente habilitadas a contratar estagiários e aprendizes (Lei 11.788/2008 e CLT, art. 428).</li>
             </ul>
           ),

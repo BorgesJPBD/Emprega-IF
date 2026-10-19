@@ -27,8 +27,8 @@ services:
         value: ^https://emprega-if[a-z0-9-]*\.onrender\.com$
       - key: CARREGAR_DADOS_EXEMPLO
         value: "true"
-      - key: DOMINIOS_EMAIL_PERMITIDOS   # vazio = aceita qualquer e-mail
-        value: ""
+      # Para aceitar só e-mails do IF, crie DOMINIOS_EMAIL_PERMITIDOS
+      # com "ifms.edu.br,estudante.ifms.edu.br". Sem ela, aceita qualquer e-mail.
       - key: SITE_URL                    # usado nos links dos e-mails
         value: https://emprega-if.onrender.com
       # E-mail de confirmação (Brevo). Preencha no painel do Render:
