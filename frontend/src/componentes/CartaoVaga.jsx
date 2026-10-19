@@ -8,7 +8,7 @@ export default function CartaoVaga({ vaga, indice = 0 }) {
   const { Icone } = vaga;
   return (
     <article
-      className="anima-entra flex flex-col rounded-2xl border border-neutral-200 bg-white p-6 transition duration-200 hover:-translate-y-1 hover:shadow-md"
+      className="anima-entra flex flex-col rounded-2xl border border-neutral-200 bg-white p-6 transition-colors duration-200 hover:border-marca-200"
       style={{ animationDelay: `${indice * 90}ms` }}
     >
       <div className="flex items-start justify-between">
@@ -20,7 +20,7 @@ export default function CartaoVaga({ vaga, indice = 0 }) {
         </span>
       </div>
 
-      <h3 className="mt-5 text-base font-medium text-neutral-900">{vaga.titulo}</h3>
+      <h3 className="mt-5 text-base font-semibold text-neutral-900" style={{ fontFamily: "var(--font-titulo)" }}>{vaga.titulo}</h3>
       <p className="mt-1 text-sm text-neutral-400">{vaga.empresa}</p>
 
       <ul className="mt-4 space-y-1.5 text-xs text-neutral-500">

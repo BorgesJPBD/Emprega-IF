@@ -16,12 +16,14 @@ export function Marca({ tamanho = 32 }) {
   );
 }
 
-export default function Logo({ tamanho = 32, texto = "text-xl" }) {
+/** `claro`: versão para fundo escuro (rodapé). */
+export default function Logo({ tamanho = 32, texto = "text-xl", claro = false }) {
   return (
     <span className="flex items-center gap-3">
       <Marca tamanho={tamanho} />
-      <span className={`${texto} font-semibold tracking-tight text-neutral-900`}>
-        Emprega<span className="text-marca-600">-IF</span>
+      <span className={`${texto} font-semibold tracking-tight ${claro ? "text-white" : "text-neutral-900"}`}
+            style={{ fontFamily: "var(--font-titulo)" }}>
+        Emprega<span className={claro ? "text-marca-500" : "text-marca-600"}>-IF</span>
       </span>
     </span>
   );

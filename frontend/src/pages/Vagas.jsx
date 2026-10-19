@@ -85,8 +85,7 @@ export default function Vagas() {
     <main className="mx-auto max-w-screen-xl px-8 py-16">
       <style>{ESTILO}</style>
 
-      <p className="text-xs uppercase tracking-widest text-neutral-400">Oportunidades</p>
-      <h1 className="mt-4 text-5xl font-semibold tracking-tight text-neutral-900">Vagas disponíveis</h1>
+      <h1 className="text-5xl font-semibold tracking-tight text-neutral-900">Vagas disponíveis</h1>
       <p className="mt-2 text-sm text-neutral-500">Explore as oportunidades sem precisar fazer login</p>
 
       <form

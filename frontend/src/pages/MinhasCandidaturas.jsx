@@ -47,8 +47,7 @@ export default function MinhasCandidaturas() {
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-14">
-      <p className="text-xs uppercase tracking-widest text-neutral-400">Estudante</p>
-      <h1 className="mt-3 text-4xl font-semibold tracking-tight text-neutral-900">Minhas candidaturas</h1>
+      <h1 className="text-4xl font-semibold tracking-tight text-neutral-900">Minhas candidaturas</h1>
       <p className="mt-2 text-sm text-neutral-500">Acompanhe o andamento de cada vaga em que você se candidatou.</p>
 
       {erro && <p role="alert" className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{erro}</p>}

@@ -21,6 +21,13 @@ export default function Cabecalho() {
     setMenuAberto(false);
   }, [pathname]);
 
+  // página atual sublinhada em verde (/vagas/123 conta como "Vagas")
+  const ativa = (rota) => pathname === rota || (rota === "/vagas" && /^\/vagas\/(?!nova)/.test(pathname));
+  const linkNav = (ativo) =>
+    `relative py-1 text-sm transition-colors after:absolute after:inset-x-0 after:-bottom-[25px] after:h-0.5 after:rounded-full ${
+      ativo ? "text-neutral-900 after:bg-marca-600" : "text-neutral-500 hover:text-neutral-900 after:bg-transparent"
+    }`;
+
   const usuario = sessao?.usuario;
   const ehEmpresa = usuario?.papel === "empresa";
 
@@ -39,13 +46,13 @@ export default function Cabecalho() {
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">
-          <Link to="/vagas" className="text-sm text-neutral-500 transition-colors hover:text-neutral-900">
+          <Link to="/vagas" aria-current={ativa("/vagas") ? "page" : undefined} className={linkNav(ativa("/vagas"))}>
             Vagas
           </Link>
-          <Link to="/para-estudantes" className="text-sm text-neutral-500 transition-colors hover:text-neutral-900">
+          <Link to="/para-estudantes" aria-current={ativa("/para-estudantes") ? "page" : undefined} className={linkNav(ativa("/para-estudantes"))}>
             Para Estudantes
           </Link>
-          <Link to="/para-empresas" className="text-sm text-neutral-500 transition-colors hover:text-neutral-900">
+          <Link to="/para-empresas" aria-current={ativa("/para-empresas") ? "page" : undefined} className={linkNav(ativa("/para-empresas"))}>
             Para Empresas
           </Link>
         </nav>

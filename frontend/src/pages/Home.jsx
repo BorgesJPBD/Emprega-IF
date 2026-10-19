@@ -1,56 +1,42 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import {
-  ArrowRight, ArrowUpRight, Briefcase, Building2, CalendarCheck, Clock,
-  FileText, MapPin, Monitor, Search, TrendingUp, Truck, UserPlus,
-  UserRound, Wrench,
-} from "lucide-react";
+import { ArrowRight, Check, Clock, MailCheck, MapPin, Search, UserPlus, CalendarCheck } from "lucide-react";
+
 import CartaoVaga from "../componentes/CartaoVaga";
 import { get } from "../api";
-import { buscarVagas } from "../vagas";
-
-/* ---------- dados mockados ---------- */
+import { COR_TIPO, buscarVagas } from "../vagas";
 
 const FILTROS = ["Todas", "Estágio", "Jovem aprendiz"];
 
 /* Números reais, contados no banco (GET /estatisticas -> view vw_estatisticas). */
 const NUMEROS = [
-  { chave: "estudantes", rotulo: "Estudantes cadastrados", apoio: "com perfil ativo" },
-  { chave: "empresas", rotulo: "Empresas parceiras", apoio: "de diversos setores" },
-  { chave: "vagas_abertas", rotulo: "Vagas abertas", apoio: "com inscrições em andamento" },
-  { chave: "candidaturas", rotulo: "Candidaturas enviadas", apoio: "pela plataforma" },
+  { chave: "vagas_abertas", rotulo: "vagas com inscrições abertas" },
+  { chave: "empresas", rotulo: "empresas parceiras" },
+  { chave: "estudantes", rotulo: "estudantes cadastrados" },
+  { chave: "candidaturas", rotulo: "candidaturas enviadas" },
 ];
 
 const PASSOS = [
-  { Icone: UserPlus, titulo: "Faça seu cadastro", texto: "Crie seu perfil com suas informações acadêmicas, currículo e áreas de interesse em poucos minutos." },
-  { Icone: Search, titulo: "Explore as vagas", texto: "Filtre oportunidades por área, localização, carga horária e remuneração alinhadas ao seu perfil." },
-  { Icone: CalendarCheck, titulo: "Candidate-se", texto: "Envie sua candidatura e agende entrevistas diretamente com as empresas pela plataforma." },
+  { Icone: UserPlus, titulo: "Crie seu perfil", texto: "Curso, período e contato. Leva poucos minutos e vale para todas as vagas." },
+  { Icone: Search, titulo: "Encontre a vaga", texto: "Busque por palavra ou filtre por tipo, área e cidade. Sem precisar de login para olhar." },
+  { Icone: CalendarCheck, titulo: "Candidate-se e acompanhe", texto: "Um clique para se candidatar. A confirmação chega por e-mail e cada etapa aparece no seu painel." },
 ];
 
-const EVENTOS = [
-  "Tech Solutions publicou Estágio em Desenvolvimento Web",
-  "Nova candidatura em Jovem Aprendiz — Administrativo",
-  "Agência Criativa abriu vaga de Marketing Digital",
-  "Rede Conecta publicou Estágio em Suporte de TI",
+/* Etapas da prévia do topo: a mesma sequência que o estudante vê em
+   "Minhas candidaturas". Elas aparecem uma depois da outra ao abrir a página
+   (é a única animação automática da Home). */
+const ETAPAS = [
+  { Icone: Check, texto: "Candidatura enviada", detalhe: "agora mesmo" },
+  { Icone: MailCheck, texto: "Confirmação enviada para o seu e-mail", detalhe: "no mesmo minuto" },
+  { Icone: null, texto: "Aguardando a resposta da empresa", detalhe: "você é avisado por e-mail" },
 ];
-
-/* nós do diagrama do hero: posição em % do quadro (450 x 300) */
-const NOS = [
-  { rotulo: "Vagas", x: 50, y: 17, Icone: FileText },
-  { rotulo: "Estudante", x: 14, y: 50, Icone: UserRound },
-  { rotulo: "Empresa", x: 86, y: 50, Icone: Building2 },
-  { rotulo: "Oportunidades", x: 50, y: 83, Icone: Briefcase },
-];
-const FLUXOS = ["M63 150 L225 150", "M387 150 L225 150", "M225 150 L225 51", "M225 150 L225 249"];
 
 const ESTILO = `
-@keyframes entra{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
-@keyframes flutua{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
-@keyframes troca{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes entra{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes etapa{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
 .anima-entra{animation:entra .7s cubic-bezier(.2,.7,.2,1) both}
-.anima-flutua{animation:flutua 5s ease-in-out infinite}
-.anima-troca{animation:troca .45s ease both}
-@media (prefers-reduced-motion:reduce){.anima-entra,.anima-flutua,.anima-troca{animation:none}}
+.anima-etapa{animation:etapa .5s cubic-bezier(.2,.7,.2,1) both}
+@media (prefers-reduced-motion:reduce){.anima-entra,.anima-etapa{animation:none}}
 `;
 
 const REDUZ =
@@ -59,7 +45,6 @@ const REDUZ =
 
 const atraso = (ms) => ({ animationDelay: `${ms}ms` });
 
-/** Fica true na primeira vez que o elemento aparece na tela. */
 function useVisivel(limiar = 0.35) {
   const ref = useRef(null);
   const [visivel, setVisivel] = useState(false);
@@ -78,7 +63,7 @@ function useVisivel(limiar = 0.35) {
   return [ref, visivel];
 }
 
-function Contador({ alvo, sufixo, ativo }) {
+function Contador({ alvo, ativo }) {
   const [n, setN] = useState(0);
   useEffect(() => {
     if (!ativo) return;
@@ -86,209 +71,153 @@ function Contador({ alvo, sufixo, ativo }) {
     let quadro;
     const inicio = performance.now();
     const passo = (agora) => {
-      const p = Math.min((agora - inicio) / 1400, 1);
+      const p = Math.min((agora - inicio) / 1200, 1);
       setN(Math.round(alvo * (1 - Math.pow(1 - p, 3))));
       if (p < 1) quadro = requestAnimationFrame(passo);
     };
     quadro = requestAnimationFrame(passo);
     return () => cancelAnimationFrame(quadro);
   }, [ativo, alvo]);
-  return <>{n.toLocaleString("pt-BR")}{sufixo}</>;
+  return <>{n.toLocaleString("pt-BR")}</>;
 }
 
-function PontoAoVivo() {
+/** Prévia do produto: uma vaga real do banco e a candidatura andando. */
+function Previa({ vaga }) {
+  if (!vaga) {
+    return <div className="aspect-[4/5] w-full max-w-md rounded-[28px] bg-neutral-900 lg:ml-auto" aria-hidden="true" />;
+  }
+  const { Icone } = vaga;
   return (
-    <span className="relative flex size-2">
-      <span className="absolute inline-flex h-full w-full rounded-full bg-marca-500 opacity-60 motion-safe:animate-ping" />
-      <span className="relative inline-flex size-2 rounded-full bg-marca-500" />
-    </span>
-  );
-}
+    <figure className="anima-entra w-full max-w-md rounded-[28px] bg-neutral-900 p-5 sm:p-7 lg:ml-auto" style={atraso(250)}>
+      <figcaption className="sr-only">Exemplo de candidatura a uma vaga da plataforma</figcaption>
 
-/** Diagrama do hero: estudante e empresa alimentam a plataforma, que devolve vagas e oportunidades. */
-function Conexao() {
-  const [evento, setEvento] = useState(0);
-  useEffect(() => {
-    if (REDUZ) return;
-    const t = setInterval(() => setEvento((i) => (i + 1) % EVENTOS.length), 3800);
-    return () => clearInterval(t);
-  }, []);
-
-  return (
-    <div className="anima-entra" style={atraso(350)}>
-      <div className="relative mx-auto aspect-[3/2] w-full max-w-[450px]" role="img"
-           aria-label="Estudantes e empresas conectados pela plataforma por vagas e oportunidades">
-        <svg viewBox="0 0 450 300" className="absolute inset-0 size-full" aria-hidden="true">
-          {FLUXOS.map((d) => (
-            <path key={d} d={d} stroke="#d4d4d8" strokeWidth="1.5" strokeDasharray="3 5" fill="none" />
-          ))}
-          {!REDUZ && FLUXOS.map((d, i) => (
-            <circle key={d} r="3.5" fill="#18181b">
-              <animateMotion dur="2.6s" begin={`${i * 0.65}s`} repeatCount="indefinite" path={d} />
-            </circle>
-          ))}
-        </svg>
-
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-          <span className="absolute inset-0 rounded-full border border-neutral-900/30 motion-safe:animate-ping" />
-          <span className="relative grid size-16 place-items-center rounded-full border border-neutral-200 bg-white shadow-sm">
-            <span className="size-8 rounded-full bg-neutral-900" />
+      <div className="rounded-2xl bg-white p-5">
+        <div className="flex items-start justify-between gap-3">
+          <span className={`grid size-10 place-items-center rounded-xl ${vaga.cor}`}>
+            <Icone className="size-5" />
+          </span>
+          <span className={`rounded-full border px-2.5 py-0.5 text-[11px] ${COR_TIPO[vaga.tipo] ?? "border-neutral-200 text-neutral-600"}`}>
+            {vaga.tipo}
           </span>
         </div>
+        <p className="mt-4 text-lg font-semibold leading-snug text-neutral-900" style={{ fontFamily: "var(--font-titulo)" }}>
+          {vaga.titulo}
+        </p>
+        <p className="text-sm text-neutral-500">{vaga.empresa}</p>
+        <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 text-xs text-neutral-500">
+          <span className="inline-flex items-center gap-1.5"><MapPin className="size-3.5" />{vaga.local}</span>
+          <span className="inline-flex items-center gap-1.5"><Clock className="size-3.5" />{vaga.horario}</span>
+        </div>
+        <div className="mt-4 flex items-center justify-between border-t border-neutral-100 pt-4">
+          <span className="text-sm font-medium text-neutral-900">
+            {vaga.valor ? `R$ ${vaga.valor.toLocaleString("pt-BR")} / mês` : "A combinar"}
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-lg bg-marca-600 px-3 py-1.5 text-xs font-medium text-white">
+            <Check className="size-3.5" /> Candidatado
+          </span>
+        </div>
+      </div>
 
-        {NOS.map(({ rotulo, x, y, Icone }, i) => (
-          <div key={rotulo} className="absolute -translate-x-1/2 -translate-y-1/2" style={{ left: `${x}%`, top: `${y}%` }}>
-            <div className="anima-flutua flex flex-col items-center gap-1.5" style={atraso(i * 700)}>
-              <span className="grid size-12 place-items-center rounded-full border border-neutral-200 bg-white text-neutral-600 shadow-sm">
-                <Icone className="size-5" />
+      <p className="mt-6 text-sm font-medium text-white">Sua candidatura</p>
+      <ol className="mt-3 space-y-3">
+        {ETAPAS.map(({ Icone: IconeEtapa, texto, detalhe }, i) => (
+          <li key={texto} className="anima-etapa flex items-start gap-3" style={atraso(900 + i * 700)}>
+            {IconeEtapa ? (
+              <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-marca-600 text-white">
+                <IconeEtapa className="size-3" strokeWidth={3} />
               </span>
-              <span className="text-[11px] text-neutral-500">{rotulo}</span>
-            </div>
-          </div>
+            ) : (
+              <span className="relative mt-0.5 grid size-5 shrink-0 place-items-center rounded-full border border-marca-500/60">
+                <span className="size-1.5 rounded-full bg-marca-500 motion-safe:animate-pulse" />
+              </span>
+            )}
+            <span>
+              <span className="block text-sm text-neutral-100">{texto}</span>
+              <span className="block text-xs text-neutral-500">{detalhe}</span>
+            </span>
+          </li>
         ))}
-      </div>
-
-      <div className="mx-auto mt-7 flex w-fit max-w-full items-center gap-2.5 rounded-full border border-neutral-200 bg-white px-4 py-2 text-xs text-neutral-600">
-        <PontoAoVivo />
-        <span key={evento} className="anima-troca truncate">{EVENTOS[evento]}</span>
-      </div>
-    </div>
+      </ol>
+    </figure>
   );
 }
 
 export default function Home() {
   const [refNumeros, numerosVisiveis] = useVisivel();
-  const [refPassos, passosVisiveis] = useVisivel(0.3);
   const [filtro, setFiltro] = useState("Todas");
-
   const [todasVagas, setTodasVagas] = useState([]);
   const [numeros, setNumeros] = useState(null);
 
+  // vagas e números reais do banco; se a API estiver fora do ar, as seções ficam vazias
   useEffect(() => {
+    buscarVagas({ limite: 30 }).then(setTodasVagas).catch(() => setTodasVagas([]));
     get("/estatisticas").then(setNumeros).catch(() => setNumeros(null));
   }, []);
 
-  // vagas reais do banco; se a API estiver fora do ar a seção só fica vazia
-  useEffect(() => {
-    buscarVagas({ limite: 30 }).then(setTodasVagas).catch(() => setTodasVagas([]));
-  }, []);
-
   const vagas = todasVagas.filter((v) => filtro === "Todas" || v.tipo === filtro).slice(0, 3);
+  const destaque = todasVagas.find((v) => v.tipo === "Estágio") ?? todasVagas[0];
 
   return (
     <main>
       <style>{ESTILO}</style>
 
-      {/* ---------- hero ---------- */}
-      <section className="relative overflow-hidden bg-white">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_72%_45%,#e4e4e7_0%,transparent_62%),radial-gradient(ellipse_at_8%_10%,#d8f3dd_0%,transparent_45%)] opacity-70"
-        />
-        <div className="relative mx-auto grid max-w-screen-xl items-center gap-14 px-8 py-20 lg:grid-cols-2 lg:py-28">
-          <div>
-            <span className="anima-entra inline-flex items-center gap-2 rounded-full border border-marca-200 bg-marca-50 px-3 py-1 text-xs font-medium text-marca-800">
-              <PontoAoVivo /> Projeto de extensão · IFMS
+      {/* ---------- topo: o que é + prévia do produto ---------- */}
+      <section className="bg-white">
+        <div className="mx-auto grid max-w-screen-xl items-center gap-12 px-6 py-16 sm:px-8 lg:grid-cols-[1.1fr_1fr] lg:py-24">
+          <div className="anima-entra">
+            <span className="inline-flex items-center gap-2 rounded-full border border-marca-200 bg-marca-50 px-3 py-1 text-xs font-medium text-marca-800">
+              <span className="size-1.5 rounded-full bg-marca-600" aria-hidden="true" />
+              Projeto de extensão do IFMS
             </span>
 
-            <h1 className="mt-7 text-5xl font-semibold leading-[1.05] tracking-tight text-neutral-900 lg:text-6xl">
-              <span className="anima-entra block" style={atraso(80)}>Conectamos</span>
-              <span className="anima-entra block" style={atraso(170)}>
-                <span className="text-marca-600">talentos</span> às
-              </span>
-              <span className="anima-entra block" style={atraso(260)}>melhores vagas</span>
+            <h1 className="mt-6 max-w-xl text-5xl font-semibold leading-[1.02] tracking-tight text-neutral-900 sm:text-6xl lg:text-7xl">
+              Conectamos talentos às melhores vagas
             </h1>
 
-            <p className="anima-entra mt-6 max-w-md text-base leading-relaxed text-neutral-500" style={atraso(340)}>
-              Estágios e programas de jovem aprendiz para estudantes do Instituto Federal.
-              Direto, simples e sem burocracia.
+            <p className="mt-6 max-w-md text-base leading-relaxed text-neutral-600 sm:text-lg">
+              Estágios e vagas de jovem aprendiz para estudantes do Instituto Federal.
+              Você se candidata com um clique e acompanha cada etapa.
             </p>
 
-            <div className="anima-entra mt-9 flex flex-wrap gap-3" style={atraso(420)}>
+            <div className="mt-9 flex flex-wrap gap-3">
               <Link
-                to="/cadastro/estudante"
-                className="group inline-flex items-center gap-2 rounded-xl bg-neutral-900 px-6 py-3.5 text-sm font-medium text-white transition hover:bg-black"
+                to="/vagas"
+                className="inline-flex items-center gap-2 rounded-xl bg-neutral-900 px-6 py-3.5 text-sm font-medium text-white transition hover:bg-black"
               >
-                Sou estudante
-                <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+                Ver vagas abertas
               </Link>
               <Link
-                to="/vagas/nova"
-                className="group inline-flex items-center gap-2 rounded-xl border border-neutral-200 bg-neutral-100 px-6 py-3.5 text-sm font-medium text-neutral-800 transition hover:border-neutral-400 hover:bg-neutral-200"
+                to="/para-empresas"
+                className="inline-flex items-center gap-2 rounded-xl border border-neutral-300 px-6 py-3.5 text-sm font-medium text-neutral-800 transition hover:border-neutral-900"
               >
-                Publicar uma vaga
-                <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+                Sou empresa
               </Link>
             </div>
-
-            <dl className="anima-entra mt-12 flex max-w-md items-center gap-6 border-t border-neutral-200 pt-6" style={atraso(500)}>
-              {[["estudantes", "Estudantes"], ["empresas", "Empresas"], ["vagas_abertas", "Vagas abertas"]].map(([chave, rotulo], i) => (
-                <div key={rotulo} className={i ? "border-l border-neutral-200 pl-6" : ""}>
-                  <dt className="text-xl font-semibold tabular-nums text-neutral-900">
-                    {numeros ? numeros[chave].toLocaleString("pt-BR") : "—"}
-                  </dt>
-                  <dd className="text-xs text-neutral-500">{rotulo}</dd>
-                </div>
-              ))}
-            </dl>
           </div>
 
-          <Conexao />
+          <Previa vaga={destaque} />
         </div>
       </section>
 
-      {/* ---------- números ---------- */}
-      <section ref={refNumeros} className="border-y border-neutral-200 bg-neutral-100">
-        <dl className="mx-auto grid max-w-screen-xl grid-cols-2 gap-10 px-8 py-14 lg:grid-cols-4">
-          {NUMEROS.map((n) => (
-            <div key={n.rotulo}>
-              <span className="mb-4 block h-1 w-8 rounded-full bg-marca-500" aria-hidden="true" />
-              <dt className="sr-only">{n.rotulo}</dt>
-              <dd className="text-4xl font-semibold tabular-nums tracking-tight text-neutral-900">
-                {numeros ? (
-                  <Contador alvo={numeros[n.chave]} sufixo="" ativo={numerosVisiveis} />
-                ) : "—"}
-              </dd>
-              <p className="mt-1 text-sm text-neutral-700">{n.rotulo}</p>
-              <p className="text-xs text-neutral-400">{n.apoio}</p>
-            </div>
-          ))}
-        </dl>
-      </section>
-
-      {/* ---------- como funciona ---------- */}
-      <section ref={refPassos} className="bg-white">
-        <div className="mx-auto max-w-screen-xl px-8 py-24">
-          <p className="text-xs uppercase tracking-widest text-neutral-400">Como funciona</p>
-          <h2 className="mt-4 max-w-sm text-4xl font-semibold leading-tight tracking-tight text-neutral-900 lg:text-5xl">
-            Do cadastro à <span className="text-neutral-400">contratação</span>
+      {/* ---------- como funciona (é uma sequência, por isso numerada) ---------- */}
+      <section className="border-y border-neutral-200 bg-neutral-100">
+        <div className="mx-auto max-w-screen-xl px-6 py-20 sm:px-8 lg:py-24">
+          <h2 className="max-w-md text-4xl font-semibold leading-tight tracking-tight text-neutral-900 lg:text-5xl">
+            Do cadastro à contratação
           </h2>
 
-          <div className="mt-14 h-px bg-neutral-200" aria-hidden="true">
-            <div
-              className={`h-px origin-left bg-marca-600 transition-transform duration-[1800ms] ease-out motion-reduce:transition-none ${
-                passosVisiveis ? "scale-x-100" : "scale-x-0"
-              }`}
-            />
-          </div>
-
-          <ol className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-3">
+          <ol className="mt-12 grid grid-cols-1 gap-5 md:grid-cols-3">
             {PASSOS.map(({ Icone, titulo, texto }, i) => (
-              <li key={titulo} className="rounded-2xl border border-neutral-200 bg-neutral-100 p-8">
-                <div className="flex items-start justify-between">
-                  <span className="grid size-14 place-items-center rounded-2xl bg-marca-50 text-marca-600">
-                    <Icone className="size-7 stroke-[1.5]" />
+              <li key={titulo} className="rounded-2xl border border-neutral-200 bg-white p-7">
+                <div className="flex items-center justify-between">
+                  <span className="grid size-12 place-items-center rounded-xl bg-marca-50 text-marca-700">
+                    <Icone className="size-6 stroke-[1.6]" />
                   </span>
-                  <span
-                    className={`text-3xl font-semibold tabular-nums transition-colors duration-500 ${
-                      passosVisiveis ? "text-neutral-900" : "text-neutral-300"
-                    }`}
-                    style={{ transitionDelay: passosVisiveis ? `${i * 600}ms` : "0ms" }}
-                  >
-                    0{i + 1}
-                  </span>
+                  <span className="text-sm font-medium tabular-nums text-neutral-400">Passo {i + 1}</span>
                 </div>
-                <h3 className="mt-10 text-lg font-medium text-neutral-900">{titulo}</h3>
+                <h3 className="mt-8 text-lg font-semibold text-neutral-900" style={{ fontFamily: "var(--font-titulo)" }}>
+                  {titulo}
+                </h3>
                 <p className="mt-2 text-sm leading-relaxed text-neutral-500">{texto}</p>
               </li>
             ))}
@@ -296,23 +225,40 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ---------- números (contados no banco) ---------- */}
+      <section ref={refNumeros} className="bg-neutral-900 text-white">
+        <div className="mx-auto grid max-w-screen-xl gap-12 px-6 py-20 sm:px-8 lg:grid-cols-[1fr_2fr] lg:py-24">
+          <div>
+            <h2 className="text-4xl font-semibold leading-tight tracking-tight lg:text-5xl">A plataforma hoje</h2>
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-neutral-400">
+              Contados direto no banco de dados a cada visita. Nada de número inventado.
+            </p>
+          </div>
+          <dl className="grid grid-cols-2 gap-x-8 gap-y-10">
+            {NUMEROS.map((n) => (
+              <div key={n.chave} className="flex flex-col-reverse border-l border-white/15 pl-5">
+                <dt className="mt-2 text-sm text-neutral-400">{n.rotulo}</dt>
+                <dd className="text-5xl font-semibold tabular-nums tracking-tight lg:text-6xl" style={{ fontFamily: "var(--font-titulo)" }}>
+                  {numeros ? <Contador alvo={numeros[n.chave]} ativo={numerosVisiveis} /> : "—"}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+      </section>
+
       {/* ---------- vagas em destaque ---------- */}
-      <section className="border-t border-neutral-200 bg-neutral-100">
-        <div className="mx-auto max-w-screen-xl px-8 py-24">
+      <section className="bg-white">
+        <div className="mx-auto max-w-screen-xl px-6 py-20 sm:px-8 lg:py-24">
           <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <p className="text-xs uppercase tracking-widest text-neutral-400">Oportunidades</p>
-              <h2 className="mt-4 text-4xl font-semibold tracking-tight text-neutral-900 lg:text-5xl">
-                Vagas em destaque
-              </h2>
-            </div>
-            <Link to="/vagas" className="group inline-flex items-center gap-2 text-sm text-neutral-500 transition hover:text-neutral-900">
+            <h2 className="text-4xl font-semibold tracking-tight text-neutral-900 lg:text-5xl">Vagas recentes</h2>
+            <Link to="/vagas" className="group inline-flex items-center gap-2 text-sm font-medium text-neutral-600 transition hover:text-marca-700">
               Ver todas as vagas
               <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
             </Link>
           </div>
 
-          <div className="mt-8 flex flex-wrap gap-2">
+          <div className="mt-8 flex flex-wrap gap-2" role="group" aria-label="Filtrar por tipo">
             {FILTROS.map((nome) => (
               <button
                 key={nome}

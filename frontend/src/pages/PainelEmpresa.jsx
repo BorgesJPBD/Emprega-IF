@@ -177,7 +177,7 @@ export default function PainelEmpresa() {
     <main className="mx-auto max-w-screen-xl px-8 py-14">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="flex items-center gap-2 text-xs uppercase tracking-widest text-neutral-400">
+          <p className="flex items-center gap-2 text-sm text-neutral-500">
             <Building2 className="size-3.5" /> {empresa.nome}
           </p>
           <h1 className="mt-3 text-4xl font-semibold tracking-tight text-neutral-900">Painel da empresa</h1>

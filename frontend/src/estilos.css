@@ -11,6 +11,21 @@
   --color-marca-600: #2f9e41;
   --color-marca-700: #237d33;
   --color-marca-800: #1d632b;
+
+  /* títulos com mais personalidade; o texto corrido segue em Inter */
+  --font-titulo: "Bricolage Grotesque Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+@layer base {
+  h1, h2 {
+    font-family: var(--font-titulo);
+    font-optical-sizing: auto;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-marca-600);
+    outline-offset: 2px;
+  }
 }
 
 /* Tokens tirados do protótipo (Figuras 2 a 5): fundo cinza claro,
@@ -37,7 +52,7 @@ body {
   margin: 0;
   background: var(--fundo);
   color: var(--tinta);
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--font-sans);
   font-size: 15px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
