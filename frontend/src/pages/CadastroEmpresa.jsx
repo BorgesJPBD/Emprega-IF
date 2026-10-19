@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import { ErroApi, post } from "../api";
+import { ErroApi, get, post } from "../api";
 
-const SETORES = [
+/* Lista de reserva: a lista oficial vem da tabela `setores` (GET /empresas/setores). */
+const SETORES_PADRAO = [
   "Tecnologia da Informação",
   "Educação",
   "Saúde",
@@ -72,6 +73,11 @@ function Erro({ mensagem }) {
 export default function CadastroEmpresa() {
   const navegar = useNavigate();
   const [form, setForm] = useState(INICIAL);
+  const [SETORES, setSetores] = useState(SETORES_PADRAO);
+
+  useEffect(() => {
+    get("/empresas/setores").then(setSetores).catch(() => {});
+  }, []);
   const [erros, setErros] = useState({});
   const [avisoErro, setAvisoErro] = useState("");
   const [criada, setCriada] = useState(null);

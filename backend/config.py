@@ -32,10 +32,10 @@ class Settings:
     # (ex.: subdomínios do Render). Vazio = desligado.
     CORS_ORIGIN_REGEX: str | None = os.getenv("CORS_ORIGIN_REGEX") or None
 
-    # Hospedagem: cria as tabelas e/ou carrega os dados de exemplo quando a
-    # API sobe. Os dois scripts podem rodar várias vezes sem duplicar nada.
-    # No Docker ficam desligados, porque o PostgreSQL já roda os scripts.
-    CRIAR_TABELAS_AO_INICIAR: bool = os.getenv("CRIAR_TABELAS_AO_INICIAR", "").lower() == "true"
+    # Ao subir, a API aplica as migrations pendentes (sql/migrations) e,
+    # se pedido, carrega os dados de exemplo. Os dois podem rodar várias
+    # vezes sem duplicar nada.
+    MIGRAR_AO_INICIAR: bool = os.getenv("MIGRAR_AO_INICIAR", "true").lower() == "true"
     CARREGAR_DADOS_EXEMPLO: bool = os.getenv("CARREGAR_DADOS_EXEMPLO", "").lower() == "true"
 
     # Validação de vínculo com o IF (UC01, passo 3).

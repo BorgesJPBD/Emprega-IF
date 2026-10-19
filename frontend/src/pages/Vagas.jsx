@@ -14,7 +14,7 @@ const ESTILO = `
 const opcoes = (vagas, campo) =>
   [...new Set(vagas.map((v) => v[campo]))].sort((a, b) => a.localeCompare(b, "pt-BR"));
 
-const VAZIO = { tipo: "", area: "", local: "" };
+const VAZIO = { q: "", tipo: "", area: "", local: "" };
 
 function Seletor({ rotulo, todas, valor, lista, onChange }) {
   return (
@@ -57,7 +57,7 @@ export default function Vagas() {
     setCarregando(true);
     setErro("");
     try {
-      setLista(await buscarVagas({ tipo: novos.tipo, area: novos.area, localizacao: novos.local }));
+      setLista(await buscarVagas({ q: novos.q, tipo: novos.tipo, area: novos.area, localizacao: novos.local }));
     } catch (e) {
       setErro(e.message);
     } finally {
@@ -91,8 +91,21 @@ export default function Vagas() {
 
       <form
         onSubmit={buscar}
-        className="mt-10 flex flex-col gap-3 rounded-2xl border border-neutral-200 bg-white p-5 md:flex-row"
+        className="mt-10 flex flex-col gap-3 rounded-2xl border border-neutral-200 bg-white p-5 md:flex-row md:flex-wrap"
       >
+        {/* busca textual no banco: título e descrição, sem diferenciar acentos */}
+        <div className="relative w-full md:basis-full">
+          <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-neutral-400" />
+          <input
+            type="search"
+            aria-label="Buscar vagas por palavra"
+            placeholder="Busque por palavra: desenvolvimento, design, vendas..."
+            value={rascunho.q}
+            maxLength={100}
+            onChange={(e) => alterar("q")(e.target.value)}
+            className="w-full rounded-xl border border-neutral-200 bg-white py-3 pl-11 pr-4 text-sm text-neutral-800 placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-900/10"
+          />
+        </div>
         <Seletor rotulo="Tipo" todas="Todas" valor={rascunho.tipo} lista={TIPOS} onChange={alterar("tipo")} />
         <Seletor rotulo="Área" todas="Todas" valor={rascunho.area} lista={AREAS} onChange={alterar("area")} />
         <Seletor rotulo="Local" todas="Todos" valor={rascunho.local} lista={LOCAIS} onChange={alterar("local")} />
@@ -128,11 +141,11 @@ export default function Vagas() {
         <div className="anima-entra mt-4 flex flex-col items-center rounded-2xl border border-dashed border-neutral-300 bg-white px-6 py-16 text-center">
           <SearchX className="size-8 text-neutral-400" />
           <h2 className="mt-4 text-base font-medium text-neutral-900">
-            {todas.length ? "Nenhuma vaga com esses filtros" : "Nenhuma vaga aberta no momento"}
+            {todas.length ? "Nenhuma vaga encontrada" : "Nenhuma vaga aberta no momento"}
           </h2>
           <p className="mt-1 text-sm text-neutral-500">
             {todas.length
-              ? "Troque o tipo, a área ou o local para ver mais oportunidades."
+              ? "Troque a palavra, o tipo, a área ou o local para ver mais oportunidades."
               : "Assim que uma empresa publicar uma vaga, ela aparece aqui."}
           </p>
           <button

@@ -60,6 +60,12 @@ export default function Cabecalho() {
 
         {usuario ? (
           <div className="hidden items-center gap-3 md:flex">
+            <Link
+              to={ehEmpresa ? "/painel" : "/minhas-candidaturas"}
+              className="rounded-lg px-3 py-2 text-sm text-neutral-500 transition-colors hover:text-neutral-900"
+            >
+              {ehEmpresa ? "Painel" : "Minhas candidaturas"}
+            </Link>
             {ehEmpresa && (
               <Link
                 to="/vagas/nova"
@@ -123,6 +129,11 @@ export default function Cabecalho() {
             <Link to="/para-empresas" className="text-sm text-neutral-600" onClick={() => setMenuAberto(false)}>Para Empresas</Link>
             {(!usuario || ehEmpresa) && (
               <Link to="/vagas/nova" className="text-sm text-neutral-600" onClick={() => setMenuAberto(false)}>Publicar vaga</Link>
+            )}
+            {usuario && (
+              <Link to={ehEmpresa ? "/painel" : "/minhas-candidaturas"} className="text-sm text-neutral-600" onClick={() => setMenuAberto(false)}>
+                {ehEmpresa ? "Painel" : "Minhas candidaturas"}
+              </Link>
             )}
             {usuario ? (
               <div className="flex items-center justify-between border-t border-black/8 pt-4">

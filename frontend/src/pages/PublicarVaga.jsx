@@ -1,15 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { ArrowLeft, Briefcase, Building2, CheckCircle2, Lock } from "lucide-react";
 
-import { ErroApi, post } from "../api";
+import { ErroApi, get, post } from "../api";
 import { lerSessao } from "../auth";
 import CartaoVaga from "../componentes/CartaoVaga";
 import { mascaraMoeda, valorEmNumero } from "../utils/formulario";
 
 /* mesmas listas do backend (app/schemas.py) */
 const TIPOS = ["Estágio", "Jovem aprendiz"];
-const AREAS = ["Tecnologia", "Administrativo", "Marketing", "Design", "Vendas", "Recursos Humanos", "Engenharia", "Logística", "Outra"];
+/* Lista de reserva: a lista oficial vem da tabela `areas` (GET /vagas/opcoes). */
+const AREAS_PADRAO = ["Tecnologia", "Administrativo", "Marketing", "Design", "Vendas", "Recursos Humanos", "Engenharia", "Logística", "Outra"];
 const MODALIDADES = ["Presencial", "Híbrido", "Remoto"];
 
 /* os nomes dos campos são os mesmos da API (POST /vagas), para os erros
@@ -146,6 +147,11 @@ export default function PublicarVaga() {
   const empresa = sessao?.usuario?.papel === "empresa" ? sessao.usuario : null;
 
   const [form, setForm] = useState(INICIAL);
+  const [AREAS, setAreas] = useState(AREAS_PADRAO);
+
+  useEffect(() => {
+    get("/vagas/opcoes").then((o) => setAreas(o.areas)).catch(() => {});
+  }, []);
   const [erros, setErros] = useState({});
   const [avisoErro, setAvisoErro] = useState("");
   const [publicada, setPublicada] = useState(null);
@@ -201,6 +207,9 @@ export default function PublicarVaga() {
           </p>
           <Link to={`/vagas/${publicada.id}`} className="mt-6 block w-full rounded-xl bg-neutral-900 py-3.5 text-sm font-medium text-white transition hover:bg-black">
             Ver a vaga publicada
+          </Link>
+          <Link to="/painel" className="mt-3 block w-full rounded-xl border border-neutral-200 py-3.5 text-sm font-medium text-neutral-900 transition hover:border-neutral-900">
+            Ir para o painel
           </Link>
           <button type="button" onClick={() => setPublicada(null)} className="mt-4 text-sm text-neutral-500 hover:text-neutral-900">
             Publicar outra vaga

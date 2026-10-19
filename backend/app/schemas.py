@@ -118,19 +118,8 @@ class LoginResposta(BaseModel):
 
 
 
-SETORES = [
-    "Tecnologia da Informação",
-    "Educação",
-    "Saúde",
-    "Indústria",
-    "Comércio",
-    "Serviços",
-    "Agronegócio",
-    "Financeiro",
-    "Logística",
-    "Construção Civil",
-    "Outro",
-]
+# Setores de atuação e áreas da vaga vêm das tabelas `setores` e `areas`
+# (migration 002). A rota confere o valor no banco; aqui só o formato.
 
 
 class EmpresaCriar(BaseModel):
@@ -160,9 +149,9 @@ class EmpresaCriar(BaseModel):
     @field_validator("setor")
     @classmethod
     def validar_setor(cls, valor: str) -> str:
-        if valor not in SETORES:
+        if not valor.strip():
             raise ValueError("Selecione um setor de atuação.")
-        return valor
+        return valor.strip()
 
     @field_validator("email_contato")
     @classmethod
@@ -209,21 +198,27 @@ class EmpresaResposta(BaseModel):
 TIPOS_VAGA = {"Estágio": "Estagio", "Jovem aprendiz": "Jovem Aprendiz"}
 TIPOS_VAGA_TELA = {banco: tela for tela, banco in TIPOS_VAGA.items()}
 
-AREAS = [
-    "Tecnologia", "Administrativo", "Marketing", "Design", "Vendas",
-    "Recursos Humanos", "Engenharia", "Logística", "Outra",
-]
 MODALIDADES = ["Presencial", "Híbrido", "Remoto"]
 
 
-def _itens(valor: str | None) -> str | None:
-    """Texto livre -> um item por linha (aceita vírgula ou quebra de linha).
-    Remove marcadores digitados pela pessoa, como "- " ou "• "."""
+def _lista(valor: str | list[str] | None, separar_virgula: bool = False) -> list[str]:
+    """Texto do formulário (um item por linha) ou lista -> lista de itens.
+    Remove marcadores digitados pela pessoa ("- ", "• ") e itens vazios.
+    Cada item vira uma linha nas tabelas vaga_requisitos, vaga_diferenciais
+    ou vaga_beneficios (1FN, migration 003)."""
     if not valor:
-        return None
-    partes = [p.strip(" -•*\t") for p in valor.replace(",", "\n").splitlines()]
-    partes = [p for p in partes if p]
-    return "\n".join(partes) or None
+        return []
+    if isinstance(valor, str):
+        if separar_virgula:
+            valor = valor.replace(",", "\n")
+        valor = valor.splitlines()
+    itens = [" ".join(item.strip(" -•*\t").split()) for item in valor]
+    vistos, unicos = set(), []
+    for item in itens:
+        if item and item.lower() not in vistos:
+            vistos.add(item.lower())
+            unicos.append(item)
+    return unicos
 
 
 class VagaCriar(BaseModel):
@@ -236,10 +231,10 @@ class VagaCriar(BaseModel):
     horario_saida: time | None = None
     carga_horaria: str | None = Field(default=None, max_length=30)
     remuneracao: Decimal | None = Field(default=None, ge=0, le=99_999_999)
-    beneficios: str | None = Field(default=None, max_length=500)
+    beneficios: list[str] = []
     descricao: str = Field(min_length=30, max_length=1500)
-    requisitos: str = Field(min_length=3, max_length=1000)
-    diferenciais: str | None = Field(default=None, max_length=800)
+    requisitos: list[str]
+    diferenciais: list[str] = []
     prazo_inscricao: date
     numero_vagas: int = Field(default=1, ge=1, le=999)
     aceite_termos: bool
@@ -259,9 +254,9 @@ class VagaCriar(BaseModel):
     @field_validator("area")
     @classmethod
     def validar_area(cls, valor: str) -> str:
-        if valor not in AREAS:
+        if not valor.strip():
             raise ValueError("Selecione a área de atuação.")
-        return valor
+        return valor.strip()
 
     @field_validator("modalidade")
     @classmethod
@@ -270,26 +265,35 @@ class VagaCriar(BaseModel):
             raise ValueError("Selecione a modalidade.")
         return valor
 
-    @field_validator("requisitos")
+    # O formulário manda cada lista como texto (um item por linha);
+    # aqui ele vira lista. mode="before" roda antes da checagem de tipo.
+    @field_validator("requisitos", mode="before")
     @classmethod
-    def validar_requisitos(cls, valor: str) -> str:
-        # requisitos são em lista, mas uma vírgula dentro de um requisito
-        # ("Cursando ADS, Ciência da Computação") não deve virar dois itens.
-        partes = [p.strip(" -•*\t") for p in valor.splitlines()]
-        return "\n".join(p for p in partes if p)
+    def validar_requisitos(cls, valor):
+        # uma vírgula dentro de um requisito ("Cursando ADS, Ciência da
+        # Computação...") não separa itens: só a quebra de linha separa
+        itens = _lista(valor)
+        if not itens:
+            raise ValueError("Informe ao menos um requisito.")
+        if len(itens) > 20 or any(len(i) > 300 for i in itens):
+            raise ValueError("Até 20 requisitos, com no máximo 300 caracteres cada.")
+        return itens
 
-    @field_validator("diferenciais")
+    @field_validator("diferenciais", mode="before")
     @classmethod
-    def validar_diferenciais(cls, valor: str | None) -> str | None:
-        if not valor:
-            return None
-        partes = [p.strip(" -•*\t") for p in valor.splitlines()]
-        return "\n".join(p for p in partes if p) or None
+    def validar_diferenciais(cls, valor):
+        itens = _lista(valor)
+        if len(itens) > 20 or any(len(i) > 300 for i in itens):
+            raise ValueError("Até 20 diferenciais, com no máximo 300 caracteres cada.")
+        return itens
 
-    @field_validator("beneficios")
+    @field_validator("beneficios", mode="before")
     @classmethod
-    def validar_beneficios(cls, valor: str | None) -> str | None:
-        return _itens(valor)
+    def validar_beneficios(cls, valor):
+        itens = _lista(valor, separar_virgula=True)
+        if len(itens) > 20 or any(len(i) > 80 for i in itens):
+            raise ValueError("Até 20 benefícios, com no máximo 80 caracteres cada.")
+        return itens
 
     @field_validator("prazo_inscricao")
     @classmethod
@@ -332,6 +336,7 @@ class VagaResposta(BaseModel):
     diferenciais: list[str]
     beneficios: list[str]
     situacao: str
+    inscricoes_abertas: bool
     data_publicacao: datetime | None
     prazo_inscricao: date | None
     empresa_id: UUID
@@ -353,3 +358,70 @@ class CandidaturaResposta(BaseModel):
     data_inscricao: datetime
     vaga_titulo: str | None = None
     empresa_nome: str | None = None
+    historico: list["EventoHistorico"] = []
+
+
+class VagaSituacao(BaseModel):
+    """Mudança de situação da vaga pela empresa. As transições permitidas
+    são conferidas pelo trigger tg_vagas_ciclo_de_vida (migration 005)."""
+    situacao: str
+
+    @field_validator("situacao")
+    @classmethod
+    def validar(cls, valor: str) -> str:
+        if valor not in ("EmSelecao", "Finalizada", "Cancelada"):
+            raise ValueError("Situação inválida.")
+        return valor
+
+
+class PainelVaga(BaseModel):
+    id: UUID
+    titulo: str
+    tipo: str
+    situacao: str
+    data_publicacao: datetime | None
+    prazo_inscricao: date | None
+    total_candidaturas: int
+    pendentes: int
+    em_entrevista: int
+    finalizadas: int
+
+
+class Candidato(BaseModel):
+    candidatura_id: UUID
+    status: str
+    data_inscricao: datetime
+    nome: str
+    email_if: str
+    telefone: str | None
+    curso: str
+    periodo: int
+    instituicao: str
+
+
+class CandidaturaStatus(BaseModel):
+    """Andamento conferido pelo trigger tg_candidaturas_andamento."""
+    status: str
+
+    @field_validator("status")
+    @classmethod
+    def validar(cls, valor: str) -> str:
+        if valor not in ("Entrevista", "Finalizado"):
+            raise ValueError("Status inválido.")
+        return valor
+
+
+class EventoHistorico(BaseModel):
+    status_anterior: str | None
+    status_novo: str
+    alterado_em: datetime
+
+
+class Estatisticas(BaseModel):
+    estudantes: int
+    empresas: int
+    vagas_abertas: int
+    candidaturas: int
+
+
+CandidaturaResposta.model_rebuild()

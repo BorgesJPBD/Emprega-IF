@@ -78,6 +78,16 @@ async def cursor():
             yield cur
 
 
+@asynccontextmanager
+async def transacao():
+    """Várias gravações que precisam acontecer juntas (tudo ou nada).
+    Ex.: a vaga e as suas listas de requisitos e benefícios."""
+    async with get_pool().connection() as conn:
+        async with conn.transaction():
+            async with conn.cursor() as cur:
+                yield cur
+
+
 async def query_all(sql: str, params: tuple | dict | None = None) -> list[dict]:
     async with cursor() as cur:
         await cur.execute(sql, params)

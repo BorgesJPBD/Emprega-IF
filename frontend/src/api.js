@@ -73,6 +73,7 @@ async function requisitar(metodo, rota, dados) {
 }
 
 export const post = (rota, dados) => requisitar("POST", rota, dados);
+export const patch = (rota, dados) => requisitar("PATCH", rota, dados);
 
 /** GET com filtros opcionais: get("/vagas", { tipo: "Estágio" }). Valores vazios são ignorados. */
 export function get(rota, filtros = {}) {

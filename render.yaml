@@ -25,8 +25,6 @@ services:
         value: https://emprega-if.onrender.com
       - key: CORS_ORIGIN_REGEX     # aceita também se o Render der outro nome ao site
         value: ^https://emprega-if[a-z0-9-]*\.onrender\.com$
-      - key: CRIAR_TABELAS_AO_INICIAR
-        value: "true"
       - key: CARREGAR_DADOS_EXEMPLO
         value: "true"
       - key: DOMINIOS_EMAIL_PERMITIDOS   # vazio = aceita qualquer e-mail

@@ -11,7 +11,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.db import abrir_pool, executar_script, fechar_pool, query_one
-from app.routers import auth, candidaturas, empresas, estudantes, vagas
+from app.migracoes import aplicar_migrations
+from app.routers import auth, candidaturas, empresas, estatisticas, estudantes, vagas
 from config import settings
 
 
@@ -20,8 +21,8 @@ async def lifespan(app: FastAPI):
     await abrir_pool()
 
     pasta_sql = Path(__file__).parent / "sql"
-    if settings.CRIAR_TABELAS_AO_INICIAR:
-        await executar_script(pasta_sql / "schema.sql")
+    if settings.MIGRAR_AO_INICIAR:
+        await aplicar_migrations()
     if settings.CARREGAR_DADOS_EXEMPLO:
         await executar_script(pasta_sql / "dados_exemplo.sql")
 
@@ -51,6 +52,7 @@ app.include_router(estudantes.router)
 app.include_router(empresas.router)
 app.include_router(vagas.router)
 app.include_router(candidaturas.router)
+app.include_router(estatisticas.router)
 
 
 @app.get("/health", tags=["Infra"])

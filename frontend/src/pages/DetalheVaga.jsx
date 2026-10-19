@@ -239,6 +239,9 @@ export default function DetalheVaga() {
                 <div>
                   <p className="text-sm font-medium text-emerald-800">Candidatura enviada</p>
                   <p className="mt-0.5 text-xs text-emerald-700">A empresa vai analisar o seu perfil e retornar por e-mail.</p>
+                  <Link to="/minhas-candidaturas" className="mt-1.5 inline-block text-xs font-medium text-emerald-800 underline">
+                    Acompanhar andamento
+                  </Link>
                 </div>
               </div>
             ) : !sessao ? (

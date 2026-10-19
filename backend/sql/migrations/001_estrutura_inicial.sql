@@ -1,11 +1,10 @@
 -- ============================================================
--- Emprega IF - criação física do modelo de dados
--- Base: seção 4.8.2 da documentação (v3.0)
+-- 001 - Estrutura inicial (seção 4.8.2 da documentação v3.0)
 --
--- Rodar com:
---   psql -U postgres -d emprega_if -f sql/schema.sql
+-- Esta era o antigo schema.sql. É escrita de forma idempotente
+-- (IF NOT EXISTS) porque os bancos criados antes das migrations já
+-- têm estas tabelas: nesse caso ela não altera nada.
 -- ============================================================
-
 -- gen_random_uuid() vem com o PostgreSQL 13+; no 12 ou anterior
 -- é preciso habilitar a extensão pgcrypto.
 CREATE EXTENSION IF NOT EXISTS pgcrypto;

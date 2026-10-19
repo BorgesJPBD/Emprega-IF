@@ -6,17 +6,19 @@ import {
   UserRound, Wrench,
 } from "lucide-react";
 import CartaoVaga from "../componentes/CartaoVaga";
+import { get } from "../api";
 import { buscarVagas } from "../vagas";
 
 /* ---------- dados mockados ---------- */
 
 const FILTROS = ["Todas", "Estágio", "Jovem aprendiz"];
 
+/* Números reais, contados no banco (GET /estatisticas -> view vw_estatisticas). */
 const NUMEROS = [
-  { alvo: 10000, sufixo: "+", rotulo: "Estudantes cadastrados", apoio: "em todo o Brasil" },
-  { alvo: 500, sufixo: "+", rotulo: "Empresas parceiras", apoio: "de diversos setores" },
-  { alvo: 2000, sufixo: "+", rotulo: "Vagas disponíveis", apoio: "atualizadas diariamente" },
-  { alvo: 85, sufixo: "%", rotulo: "Taxa de aprovação", apoio: "nas candidaturas" },
+  { chave: "estudantes", rotulo: "Estudantes cadastrados", apoio: "com perfil ativo" },
+  { chave: "empresas", rotulo: "Empresas parceiras", apoio: "de diversos setores" },
+  { chave: "vagas_abertas", rotulo: "Vagas abertas", apoio: "com inscrições em andamento" },
+  { chave: "candidaturas", rotulo: "Candidaturas enviadas", apoio: "pela plataforma" },
 ];
 
 const PASSOS = [
@@ -160,6 +162,11 @@ export default function Home() {
   const [filtro, setFiltro] = useState("Todas");
 
   const [todasVagas, setTodasVagas] = useState([]);
+  const [numeros, setNumeros] = useState(null);
+
+  useEffect(() => {
+    get("/estatisticas").then(setNumeros).catch(() => setNumeros(null));
+  }, []);
 
   // vagas reais do banco; se a API estiver fora do ar a seção só fica vazia
   useEffect(() => {
@@ -215,9 +222,11 @@ export default function Home() {
             </div>
 
             <dl className="anima-entra mt-12 flex max-w-md items-center gap-6 border-t border-neutral-200 pt-6" style={atraso(500)}>
-              {[["10K+", "Estudantes"], ["500+", "Empresas"], ["2K+", "Vagas ativas"]].map(([valor, rotulo], i) => (
+              {[["estudantes", "Estudantes"], ["empresas", "Empresas"], ["vagas_abertas", "Vagas abertas"]].map(([chave, rotulo], i) => (
                 <div key={rotulo} className={i ? "border-l border-neutral-200 pl-6" : ""}>
-                  <dt className="text-xl font-semibold text-neutral-900">{valor}</dt>
+                  <dt className="text-xl font-semibold tabular-nums text-neutral-900">
+                    {numeros ? numeros[chave].toLocaleString("pt-BR") : "—"}
+                  </dt>
                   <dd className="text-xs text-neutral-500">{rotulo}</dd>
                 </div>
               ))}
@@ -235,7 +244,9 @@ export default function Home() {
             <div key={n.rotulo}>
               <dt className="sr-only">{n.rotulo}</dt>
               <dd className="text-4xl font-semibold tabular-nums tracking-tight text-neutral-900">
-                <Contador alvo={n.alvo} sufixo={n.sufixo} ativo={numerosVisiveis} />
+                {numeros ? (
+                  <Contador alvo={numeros[n.chave]} sufixo="" ativo={numerosVisiveis} />
+                ) : "—"}
               </dd>
               <p className="mt-1 text-sm text-neutral-700">{n.rotulo}</p>
               <p className="text-xs text-neutral-400">{n.apoio}</p>

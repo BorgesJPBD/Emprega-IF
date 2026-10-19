@@ -32,7 +32,7 @@ acadêmico do Instituto Federal.
 
 | Tela / caso de uso | Situação |
 |---|---|
-| Banco de dados (4 tabelas) | operante |
+| Banco de dados (10 tabelas, 3 views, 4 triggers, migrations) | operante |
 | UC01 — Cadastrar Perfil de Estudante | completo |
 | Autenticação (Login, Figura 5) | completo |
 | Tela de Cadastro de Estudante (Figura 3) | completa |
@@ -42,6 +42,9 @@ acadêmico do Instituto Federal.
 | Listagem e detalhe de vagas | completos, com filtros no banco |
 | Publicar Vaga (UC03, Figura 4) | completo (exige login de empresa) |
 | Candidatura a vaga | completa (exige login de estudante) |
+| Busca de vagas por palavra (Full Text Search) | completa |
+| Painel da empresa (vagas, candidatos, andamento) | completo |
+| Minhas candidaturas, com histórico de status | completa |
 | Vagas recomendadas (UC02) | pendente |
 
 ---
@@ -66,10 +69,11 @@ emprega-if/
 ├── backend/                API REST (FastAPI)
 │   ├── main.py             aplicação, CORS e lifespan do pool
 │   ├── config.py           variáveis de ambiente
-│   ├── sql/schema.sql      criação física do banco (seção 4.8.2)
+│   ├── sql/migrations/     o banco, em scripts numerados (001, 002, ...)
 │   ├── sql/dados_exemplo.sql  6 empresas e 6 vagas para desenvolvimento
 │   └── app/
 │       ├── db.py           único ponto que conversa com o banco
+│       ├── migracoes.py    aplica as migrations pendentes quando a API sobe
 │       ├── schemas.py      valida o que entra, define o que sai
 │       ├── seguranca.py    hash bcrypt e token JWT
 │       ├── dependencias.py quem está logado (exigir_empresa, exigir_estudante)
@@ -78,7 +82,8 @@ emprega-if/
 │           ├── estudantes.py   UC01
 │           ├── empresas.py     cadastro de empresa
 │           ├── vagas.py        listagem e UC03
-│           ├── candidaturas.py candidatura a vaga
+│           ├── candidaturas.py candidatura e andamento
+│           ├── estatisticas.py números da página inicial
 │           └── auth.py         login
 ├── frontend/               interface web (React + Vite)
     └── src/
@@ -88,7 +93,7 @@ emprega-if/
         ├── componentes/    peças reaproveitadas
         └── pages/          uma tela por arquivo
 ├── docker-compose.yml      sobe banco + API + frontend juntos
-└── scripts/                instalação automática (setup.ps1 e setup.sh)
+└── render.yaml             configuração da hospedagem (Render)
 ```
 
 Onde colocar código novo:
@@ -99,7 +104,7 @@ Onde colocar código novo:
 | a rota da tela | uma linha em `App.jsx` |
 | um endpoint | `backend/app/routers/` |
 | validação de campos | `backend/app/schemas.py` |
-| tabela ou coluna | `backend/sql/schema.sql` |
+| tabela, coluna, view, trigger | um arquivo novo em `backend/sql/migrations/` (o próximo número) |
 
 ---
 
@@ -119,8 +124,11 @@ docker compose up
 ```
 
 Pronto. Na primeira vez demora alguns minutos baixando as imagens; depois sobe
-em segundos. O `schema.sql` roda sozinho na criação do banco, então não é
-preciso criar tabela nenhuma na mão.
+em segundos. As tabelas são criadas pela própria API quando ela sobe (migrations),
+então não é preciso criar tabela nenhuma na mão.
+
+> Se a porta 5432 já estiver ocupada por um PostgreSQL instalado no Windows,
+> crie um arquivo `.env` na raiz do projeto com a linha `DB_PORTA=5433`.
 
 | Endereço | O que é |
 |---|---|
@@ -181,17 +189,11 @@ Todas as empresas de exemplo usam a senha `empresa123` — por exemplo,
 
 ### 3.2 Atualizando um banco que já existe
 
-O `schema.sql` pode ser rodado de novo sem perder dados: ele só cria o que
-falta (tabelas e colunas novas). Depois de puxar alterações no banco:
+Não precisa fazer nada: ao subir, a API aplica sozinha as migrations que o seu
+banco ainda não tem, sem apagar dados (veja a seção 6.1). Basta reiniciar:
 
 ```bash
-# Docker
-docker compose exec db psql -U postgres -d emprega_if -f /docker-entrypoint-initdb.d/01_schema.sql
-docker compose exec db psql -U postgres -d emprega_if -f /docker-entrypoint-initdb.d/02_dados_exemplo.sql
-
-# Instalação local (dentro da pasta backend)
-psql -U postgres -d emprega_if -f sql/schema.sql
-psql -U postgres -d emprega_if -f sql/dados_exemplo.sql
+docker compose restart api
 ```
 
 Se preferir começar do zero no Docker: `docker compose down -v` e depois
@@ -216,8 +218,9 @@ Se preferir começar do zero no Docker: `docker compose down -v` e depois
 - **API e site:** [Render](https://render.com) → **New → Blueprint** → este repositório.
   O `render.yaml` já descreve os dois serviços; o Render só pede o `DATABASE_URL`
   (a string do Neon).
-- As tabelas e as vagas de exemplo são criadas sozinhas na primeira vez que a API
-  sobe (`CRIAR_TABELAS_AO_INICIAR` e `CARREGAR_DADOS_EXEMPLO`).
+- As tabelas e as vagas de exemplo são criadas sozinhas quando a API sobe
+  (migrations e `CARREGAR_DADOS_EXEMPLO`). Um `git push` com migration nova
+  atualiza o banco do Neon no próximo deploy.
 - No plano grátis a API "dorme" após 15 minutos sem acesso e leva cerca de 1 minuto
   para acordar: abra o site alguns minutos antes de apresentar.
 
@@ -233,10 +236,10 @@ dentro.
 Também não vão para o repositório: `node_modules/`, `.venv/` e `dist/`. São
 reconstruídos por `npm install` e `pip install`, e somam centenas de megabytes.
 
-Quando alguém mexer no banco, a alteração vai no `backend/sql/schema.sql` e é
-comunicada ao time — quem estiver no Docker recria com `docker compose down -v`
-seguido de `docker compose up`; quem estiver com instalação local roda o
-`schema.sql` de novo.
+Quando alguém mexer no banco, a alteração vai num arquivo novo em
+`backend/sql/migrations/`, com o próximo número. Nunca edite uma migration que
+já foi aplicada: o banco de quem já rodou não vai receber a mudança. Mudanças
+feitas direto no pgAdmin não ficam no projeto e se perdem.
 
 Para evitar conflito, combinem quem pega qual tela: cada tela mexe em arquivos
 próprios (`pages/`, `routers/`), então trabalhos paralelos raramente se
@@ -279,20 +282,61 @@ validação apenas no frontend é contornável.
 
 ---
 
-## 6. Ajustes no modelo de dados
+## 6. Modelo de dados
 
-O modelo do item 4.8.2 precisou de complementos para as telas funcionarem.
-Nenhuma entidade ou relacionamento foi alterado — a modelagem original foi
-mantida e complementada. Todos os ajustes estão comentados no `schema.sql`:
+O modelo do item 4.8.2 foi mantido nas suas quatro entidades principais
+(estudantes, empresas, vagas, candidaturas) e complementado. Cada evolução está
+numa migration comentada em `backend/sql/migrations/`.
+
+### 6.1 Migrations
+
+| Arquivo | O que faz |
+|---|---|
+| `001_estrutura_inicial.sql` | as 4 tabelas do item 4.8.2 com os complementos do protótipo |
+| `002_tabelas_de_dominio.sql` | `setores` e `areas` viram tabelas com chave estrangeira |
+| `003_primeira_forma_normal.sql` | requisitos, diferenciais e benefícios saem do texto e viram tabelas (1FN) |
+| `004_integridade.sql` | `TIMESTAMPTZ`, `NOT NULL`, `CHECK` de formato e `ON DELETE` explícito |
+| `005_regras_e_historico.sql` | triggers de regra de negócio e histórico de status |
+| `006_views_busca_e_indices.sql` | views, busca textual (GIN) e revisão de índices |
+
+A tabela `schema_migrations` registra quais já rodaram. Cada arquivo roda numa
+transação: se falhar no meio, nada fica pela metade.
+
+### 6.2 Complementos ao item 4.8.2
 
 | Ajuste | Motivo |
 |---|---|
 | `estudantes.senha_hash` | a tabela não tinha campo de senha, mas a classe `Usuario` (Figura 9) e as telas de Cadastro e Login exigem uma |
 | `estudantes.periodo` | o UC01 lista Período como campo obrigatório |
 | `estudantes.instituicao`, `telefone` | campos presentes no protótipo da Figura 3 |
-| `empresas`: `nome_fantasia`, `setor`, `email_contato`, `telefone`, `senha_hash` | campos do protótipo da Figura 4; sem e-mail e senha a empresa não consegue autenticar |
+| `empresas`: `nome_fantasia`, `setor_id`, `email_contato`, `telefone`, `senha_hash` | campos do protótipo da Figura 4; sem e-mail e senha a empresa não consegue autenticar |
 | `vagas.situacao` | implementa os cinco estados da Figura 11 (Rascunho, Ativa, EmSelecao, Finalizada, Cancelada) |
-| `vagas`: `descricao`, `requisitos`, `prazo_inscricao` | citados no UC03 e nas regras de negócio |
+| `vagas`: `descricao`, `prazo_inscricao`, `modalidade`, horários, `numero_vagas` | citados no UC03 e no protótipo da tela Publicar Vaga |
+
+### 6.3 Decisões de modelagem
+
+- **1FN:** um requisito ou benefício por linha. `vaga_requisitos` e
+  `vaga_diferenciais` são 1:N com a vaga (com `ordem`); `beneficios` é um
+  catálogo ligado às vagas por `vaga_beneficios` (N:N), então "Vale-transporte"
+  existe uma vez só, sem grafias diferentes.
+- **Tabelas de domínio:** `setores` e `areas` em vez de texto livre. O banco
+  recusa valor inexistente, e as telas carregam as listas dele.
+- **Integridade no banco, não só na API:** CPF com 11 dígitos, CNPJ com 14,
+  e-mail em minúsculas, saída depois da entrada, prazo depois da publicação.
+- **Exclusões:** empresa com vagas não pode ser apagada (`RESTRICT`); vaga não se
+  apaga, muda de situação (exclusão lógica); apagar um estudante apaga as
+  candidaturas dele (`CASCADE`), atendendo o direito de eliminação da LGPD.
+- **Triggers:** candidatura só em vaga aberta; ciclo de vida da vaga
+  (Rascunho → Ativa → EmSelecao → Finalizada, ou Cancelada); andamento da
+  candidatura (Pendente → Entrevista → Finalizado); histórico de status gravado
+  pelo próprio banco em `candidatura_historico`.
+- **Views:** `vw_vagas` (vaga completa, usada pela API), `vw_painel_vagas`
+  (contagem de candidaturas por status) e `vw_estatisticas` (página inicial).
+- **Busca:** coluna gerada `busca` (`tsvector`, título com peso maior que a
+  descrição, dicionário português e sem acentos) com índice GIN.
+- **Índices:** removidos os redundantes (`candidaturas(estudante_id)` já é coberto
+  pelo `UNIQUE (estudante_id, vaga_id)`) e os de baixa seletividade (`tipo`,
+  `situacao`); criado um índice parcial só das vagas ativas.
 
 ---
 
@@ -324,12 +368,19 @@ Cada exceção prevista no UC01 tem uma resposta HTTP correspondente:
 | POST | `/estudantes` | cadastra o perfil do estudante (UC01) |
 | POST | `/auth/login` | autentica estudante ou empresa e devolve o JWT |
 | POST | `/empresas` | cadastra o perfil da empresa |
-| GET | `/vagas` | vagas abertas; filtros `tipo`, `area`, `localizacao` |
+| GET | `/vagas` | vagas abertas; busca `q` e filtros `tipo`, `area`, `localizacao` |
+| GET | `/vagas/opcoes` | tipos, áreas (da tabela `areas`) e modalidades |
 | GET | `/vagas/{id}` | detalhes de uma vaga |
 | GET | `/vagas/{id}/parecidas` | vagas abertas do mesmo tipo ou área |
 | POST | `/vagas` | publica vaga — **empresa logada** (UC03) |
+| PATCH | `/vagas/{id}/situacao` | encerra, finaliza ou cancela — **empresa dona** |
+| GET | `/vagas/{id}/candidatos` | candidatos da vaga — **empresa dona** |
+| GET | `/empresas/me/vagas` | painel: vagas da empresa com contagens — **empresa logada** |
+| GET | `/empresas/setores` | setores (da tabela `setores`) |
 | POST | `/candidaturas` | candidata-se a uma vaga — **estudante logado** |
-| GET | `/candidaturas/minhas` | candidaturas do estudante logado |
+| GET | `/candidaturas/minhas` | candidaturas do estudante logado, com histórico |
+| PATCH | `/candidaturas/{id}/status` | muda o andamento — **empresa dona da vaga** |
+| GET | `/estatisticas` | totais da página inicial |
 | GET | `/health` | verifica a conexão com o banco |
 
 Rotas marcadas como logadas exigem o cabeçalho `Authorization: Bearer <token>`
@@ -340,10 +391,6 @@ com o papel errado (estudante tentando publicar, por exemplo): 403.
 
 ## 9. Próximos passos
 
-- Página Inicial (Figura 2) e Publicar Vaga (UC03, Figura 4)
-- Painel da empresa: listar as próprias vagas e ver os candidatos
-- Tela "Minhas candidaturas" para o estudante (o endpoint já existe)
-- Cabeçalho mostrando quem está logado, com botão de sair
 - E-mail de confirmação do cadastro (UC01, passos 5 e 6) — a coluna `ativo` já
   existe no banco
-- Filtragem de vagas e algoritmo de recomendação (UC02)
+- Algoritmo de recomendação de vagas por perfil (UC02)

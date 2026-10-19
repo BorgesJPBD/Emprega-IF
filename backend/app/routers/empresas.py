@@ -1,26 +1,58 @@
-from fastapi import APIRouter, HTTPException, status
+"""Empresas: cadastro e painel da empresa logada."""
+
+from fastapi import APIRouter, Depends, HTTPException, status
 from psycopg import errors
 
-from app.db import execute, query_one
-from app.schemas import SETORES, EmpresaCriar, EmpresaResposta
+from app.db import execute, query_all, query_one
+from app.dependencias import Usuario, exigir_empresa
+from app.schemas import EmpresaCriar, EmpresaResposta, PainelVaga
 from app.seguranca import gerar_hash_senha
 
 router = APIRouter(prefix="/empresas", tags=["Empresas"])
 
+# O setor chega pelo nome e é gravado pelo id da tabela `setores`.
+# Se o nome não existir, o SELECT não devolve linha e nada é gravado.
 SQL_INSERIR = """
-    INSERT INTO empresas
-        (razao_social, nome_fantasia, cnpj, setor, email_contato,
-         telefone, endereco, senha_hash)
-    VALUES
-        (%(razao_social)s, %(nome_fantasia)s, %(cnpj)s, %(setor)s,
-         %(email_contato)s, %(telefone)s, %(endereco)s, %(senha_hash)s)
-    RETURNING id, razao_social, nome_fantasia, email_contato, setor
+    WITH nova AS (
+        INSERT INTO empresas
+            (razao_social, nome_fantasia, cnpj, setor_id, email_contato,
+             telefone, endereco, senha_hash)
+        SELECT %(razao_social)s, %(nome_fantasia)s, %(cnpj)s, s.id,
+               %(email_contato)s, %(telefone)s, %(endereco)s, %(senha_hash)s
+          FROM setores s
+         WHERE s.nome = %(setor)s
+        RETURNING id, razao_social, nome_fantasia, email_contato, setor_id
+    )
+    SELECT nova.id, nova.razao_social, nova.nome_fantasia, nova.email_contato,
+           s.nome AS setor
+      FROM nova JOIN setores s ON s.id = nova.setor_id
 """
 
 
 @router.get("/setores", summary="Setores de atuação aceitos")
 async def listar_setores() -> list[str]:
-    return SETORES
+    linhas = await query_all("SELECT nome FROM setores ORDER BY id")
+    return [linha["nome"] for linha in linhas]
+
+
+@router.get(
+    "/me/vagas",
+    response_model=list[PainelVaga],
+    summary="Painel: vagas da empresa logada, com contagem de candidaturas",
+)
+async def minhas_vagas(empresa: Usuario = Depends(exigir_empresa)):
+    linhas = await query_all(
+        """
+        SELECT id, titulo, tipo, situacao, data_publicacao, prazo_inscricao,
+               total_candidaturas, pendentes, em_entrevista, finalizadas
+          FROM vw_painel_vagas
+         WHERE empresa_id = %s
+         ORDER BY data_publicacao DESC NULLS LAST
+        """,
+        (empresa.id,),
+    )
+    rotulo = {"Estagio": "Estágio", "Jovem Aprendiz": "Jovem aprendiz"}
+    return [{**linha, "tipo": rotulo.get(linha["tipo"], linha["tipo"])} for linha in linhas]
 
 
 @router.post(
@@ -67,4 +99,9 @@ async def cadastrar_empresa(dados: EmpresaCriar):
             detail={"campo": "cnpj", "mensagem": "Esta empresa já possui cadastro."},
         )
 
+    if empresa is None:
+        raise HTTPException(
+            status_code=422,
+            detail=[{"loc": ["body", "setor"], "msg": "Selecione um setor de atuação."}],
+        )
     return empresa

@@ -7,12 +7,13 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: emprega_if
     ports:
-      - "5432:5432"
+      # Porta no seu computador. Se a 5432 já estiver ocupada (por um
+      # PostgreSQL instalado no Windows, por exemplo), crie um arquivo .env
+      # ao lado deste com a linha  DB_PORTA=5433
+      - "${DB_PORTA:-5432}:5432"
     volumes:
       - dados-postgres:/var/lib/postgresql/data
-      # O PostgreSQL roda estes arquivos em ordem alfabética, só na criação do banco.
-      - ./backend/sql/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
-      - ./backend/sql/dados_exemplo.sql:/docker-entrypoint-initdb.d/02_dados_exemplo.sql:ro
+    # As tabelas são criadas pela API ao subir (migrations em backend/sql/migrations).
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d emprega_if"]
       interval: 5s
@@ -27,6 +28,7 @@ services:
       SECRET_KEY: chave-de-desenvolvimento-nao-usar-em-producao
       CORS_ORIGINS: http://localhost:5173
       DOMINIOS_EMAIL_PERMITIDOS: ""
+      CARREGAR_DADOS_EXEMPLO: "true"
     ports:
       - "8000:8000"
     volumes:
