@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { ArrowUpRight, Clock, MapPin } from "lucide-react";
 
+import { COR_TIPO } from "../vagas";
+
 /** Cartão de vaga. `indice` escalona a entrada quando a lista aparece. */
 export default function CartaoVaga({ vaga, indice = 0 }) {
   const { Icone } = vaga;
@@ -10,10 +12,10 @@ export default function CartaoVaga({ vaga, indice = 0 }) {
       style={{ animationDelay: `${indice * 90}ms` }}
     >
       <div className="flex items-start justify-between">
-        <span className="grid size-10 place-items-center rounded-xl bg-neutral-100 text-neutral-600">
+        <span className={`grid size-10 place-items-center rounded-xl ${vaga.cor ?? "bg-neutral-100 text-neutral-600"}`}>
           <Icone className="size-5" />
         </span>
-        <span className="rounded-full border border-neutral-200 px-2.5 py-0.5 text-[11px] text-neutral-600">
+        <span className={`rounded-full border px-2.5 py-0.5 text-[11px] ${COR_TIPO[vaga.tipo] ?? "border-neutral-200 text-neutral-600"}`}>
           {vaga.tipo}
         </span>
       </div>
@@ -32,7 +34,7 @@ export default function CartaoVaga({ vaga, indice = 0 }) {
         </span>
         <Link
           to={`/vagas/${vaga.id}`}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 px-3 py-1.5 text-xs text-neutral-700 transition hover:border-neutral-900 hover:text-neutral-900"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 px-3 py-1.5 text-xs text-neutral-700 transition hover:border-marca-600 hover:text-marca-700"
         >
           Ver vaga <ArrowUpRight className="size-3" />
         </Link>

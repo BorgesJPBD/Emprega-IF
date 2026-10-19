@@ -12,11 +12,12 @@ de status também é gravado pelo banco, sem código nesta rota.
 
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from psycopg import errors
 
 from app.db import query_all, query_one, transacao
 from app.dependencias import Usuario, exigir_empresa, exigir_estudante
+from app.notificacoes import avisar_mudanca_status, confirmar_candidatura
 from app.schemas import CandidaturaCriar, CandidaturaResposta, CandidaturaStatus
 
 router = APIRouter(prefix="/candidaturas", tags=["Candidaturas"])
@@ -51,7 +52,9 @@ HISTORICO = """
     summary="Candidatar-se a uma vaga",
 )
 async def candidatar(
-    dados: CandidaturaCriar, estudante: Usuario = Depends(exigir_estudante)
+    dados: CandidaturaCriar,
+    tarefas: BackgroundTasks,
+    estudante: Usuario = Depends(exigir_estudante),
 ):
     vaga = await query_one("SELECT situacao FROM vagas WHERE id = %s", (dados.vaga_id,))
     if vaga is None or vaga["situacao"] == "Rascunho":
@@ -76,7 +79,27 @@ async def candidatar(
         # trigger tg_candidaturas_validar: vaga encerrada ou cadastro inativo
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=erro.diag.message_primary)
 
-    return await _buscar(nova["id"])
+    candidatura = await _buscar(nova["id"])
+    pessoa = await _contato(nova["id"])
+    # roda depois que a resposta foi enviada: a tela não espera o e-mail
+    tarefas.add_task(
+        confirmar_candidatura,
+        pessoa["email_if"], pessoa["nome"], candidatura["vaga_titulo"],
+        candidatura["empresa_nome"], candidatura["data_inscricao"],
+    )
+    return candidatura
+
+
+async def _contato(candidatura_id: UUID) -> dict:
+    """Nome e e-mail do estudante dono da candidatura."""
+    return await query_one(
+        """
+        SELECT e.nome, e.email_if
+          FROM candidaturas c JOIN estudantes e ON e.id = c.estudante_id
+         WHERE c.id = %s
+        """,
+        (candidatura_id,),
+    )
 
 
 async def _buscar(candidatura_id: UUID) -> dict:
@@ -125,6 +148,7 @@ async def minhas_candidaturas(estudante: Usuario = Depends(exigir_estudante)):
 async def mudar_status(
     candidatura_id: UUID,
     dados: CandidaturaStatus,
+    tarefas: BackgroundTasks,
     empresa: Usuario = Depends(exigir_empresa),
 ):
     dona = await query_one(
@@ -148,4 +172,11 @@ async def mudar_status(
         # trigger tg_candidaturas_andamento: transição não permitida
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=erro.diag.message_primary)
 
-    return await _buscar(candidatura_id)
+    candidatura = await _buscar(candidatura_id)
+    pessoa = await _contato(candidatura_id)
+    tarefas.add_task(
+        avisar_mudanca_status,
+        pessoa["email_if"], pessoa["nome"], candidatura["vaga_titulo"],
+        candidatura["empresa_nome"], dados.status,
+    )
+    return candidatura

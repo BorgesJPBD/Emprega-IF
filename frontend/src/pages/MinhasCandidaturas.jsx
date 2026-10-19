@@ -12,7 +12,7 @@ import { lerSessao } from "../auth";
 const STATUS = {
   Pendente: { cor: "bg-neutral-100 text-neutral-700", Icone: Send, texto: "Candidatura enviada" },
   Entrevista: { cor: "bg-sky-50 text-sky-700", Icone: MessagesSquare, texto: "Chamado para entrevista" },
-  Finalizado: { cor: "bg-emerald-50 text-emerald-700", Icone: CircleCheck, texto: "Processo finalizado" },
+  Finalizado: { cor: "bg-marca-50 text-marca-700", Icone: CircleCheck, texto: "Processo finalizado" },
 };
 
 const quando = (iso) =>

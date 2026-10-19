@@ -8,7 +8,7 @@ import {
 import { get, post } from "../api";
 import { lerSessao } from "../auth";
 import CartaoVaga from "../componentes/CartaoVaga";
-import { buscarParecidas, buscarVaga } from "../vagas";
+import { COR_TIPO, buscarParecidas, buscarVaga } from "../vagas";
 
 const ESTILO = `
 @keyframes entra{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
@@ -181,11 +181,11 @@ export default function DetalheVaga() {
 
       <header className="anima-entra mt-6 rounded-2xl border border-neutral-200 bg-white p-7 md:p-8">
         <div className="flex items-start gap-5">
-          <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-neutral-100 text-neutral-600">
+          <span className={`grid size-14 shrink-0 place-items-center rounded-2xl ${vaga.cor}`}>
             <Icone className="size-7" />
           </span>
           <div>
-            <span className="rounded-full border border-neutral-200 px-2.5 py-0.5 text-[11px] text-neutral-600">{vaga.tipo}</span>
+            <span className={`rounded-full border px-2.5 py-0.5 text-[11px] ${COR_TIPO[vaga.tipo] ?? "border-neutral-200 text-neutral-600"}`}>{vaga.tipo}</span>
             <h1 className="mt-2 text-3xl font-semibold tracking-tight text-neutral-900 md:text-4xl">{vaga.titulo}</h1>
             <ul className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm text-neutral-500">
               <li className="flex items-center gap-2"><Building2 className="size-4 text-neutral-400" />{vaga.empresa}</li>
@@ -221,7 +221,7 @@ export default function DetalheVaga() {
           <div className="mt-5">
             <div className="h-1.5 overflow-hidden rounded-full bg-neutral-100" aria-hidden="true">
               <div
-                className={`h-full rounded-full ${dias <= 7 ? "bg-amber-500" : "bg-neutral-900"}`}
+                className={`h-full rounded-full ${dias <= 7 ? "bg-amber-500" : "bg-marca-600"}`}
                 style={{ width: `${progresso}%` }}
               />
             </div>
@@ -234,12 +234,12 @@ export default function DetalheVaga() {
                 Inscrições encerradas
               </button>
             ) : candidatou ? (
-              <div role="status" className="anima-entra flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3.5">
-                <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-emerald-600" />
+              <div role="status" className="anima-entra flex items-start gap-3 rounded-xl border border-marca-200 bg-marca-50 px-4 py-3.5">
+                <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-marca-600" />
                 <div>
-                  <p className="text-sm font-medium text-emerald-800">Candidatura enviada</p>
-                  <p className="mt-0.5 text-xs text-emerald-700">A empresa vai analisar o seu perfil e retornar por e-mail.</p>
-                  <Link to="/minhas-candidaturas" className="mt-1.5 inline-block text-xs font-medium text-emerald-800 underline">
+                  <p className="text-sm font-medium text-marca-800">Candidatura enviada</p>
+                  <p className="mt-0.5 text-xs text-marca-700">Enviamos uma confirmação para o seu e-mail. A empresa vai analisar o seu perfil.</p>
+                  <Link to="/minhas-candidaturas" className="mt-1.5 inline-block text-xs font-medium text-marca-800 underline">
                     Acompanhar andamento
                   </Link>
                 </div>
@@ -278,7 +278,7 @@ export default function DetalheVaga() {
             type="button" onClick={copiarLink}
             className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-neutral-200 py-2.5 text-xs text-neutral-600 transition hover:border-neutral-400 hover:text-neutral-900"
           >
-            {copiado ? <Check className="size-3.5 text-emerald-600" /> : <Copy className="size-3.5" />}
+            {copiado ? <Check className="size-3.5 text-marca-600" /> : <Copy className="size-3.5" />}
             {copiado ? "Link copiado" : "Copiar link da vaga"}
           </button>
         </aside>
@@ -292,7 +292,7 @@ export default function DetalheVaga() {
           </Secao>
           {vaga.diferenciais.length > 0 && (
             <Secao titulo="Diferenciais">
-              <Marcadores itens={vaga.diferenciais} cor="text-emerald-600" />
+              <Marcadores itens={vaga.diferenciais} cor="text-marca-600" />
             </Secao>
           )}
           {vaga.beneficios.length > 0 && (

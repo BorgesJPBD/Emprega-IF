@@ -1,4 +1,5 @@
 // Rodape.jsx
+import Logo from "./Logo";
 import { Link } from "react-router-dom";
 
 const COLUNAS = [
@@ -34,16 +35,7 @@ export default function Rodape() {
     <footer className="w-full border-t border-black/8 bg-white px-8 py-16">
       <div className="mx-auto max-w-screen-xl">
         <div className="mb-14 flex items-center gap-3">
-          <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-            <rect width="32" height="32" rx="8" fill="#111111" />
-            <circle cx="8" cy="22" r="4" fill="white" />
-            <circle cx="24" cy="22" r="4" fill="white" />
-            <path d="M12 22 Q16 9 20 22" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-            <circle cx="16" cy="11.5" r="2.5" fill="white" />
-          </svg>
-          <span className="text-lg font-semibold text-neutral-900">
-            Emprega<span className="text-neutral-400">-IF</span>
-          </span>
+          <Logo tamanho={28} texto="text-lg" />
         </div>
 
         <div className="grid grid-cols-2 gap-10 md:grid-cols-4">

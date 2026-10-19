@@ -29,6 +29,14 @@ services:
         value: "true"
       - key: DOMINIOS_EMAIL_PERMITIDOS   # vazio = aceita qualquer e-mail
         value: ""
+      - key: SITE_URL                    # usado nos links dos e-mails
+        value: https://emprega-if.onrender.com
+      # E-mail de confirmação (Brevo). Preencha no painel do Render:
+      # Environment > BREVO_API_KEY e EMAIL_REMETENTE (o e-mail verificado no Brevo).
+      - key: BREVO_API_KEY
+        sync: false
+      - key: EMAIL_REMETENTE
+        sync: false
 
   # ---------- Site (React) ----------
   - type: web

@@ -11,7 +11,7 @@ import { lerSessao } from "../auth";
 
 const SITUACAO = {
   Rascunho: { rotulo: "Rascunho", cor: "bg-neutral-100 text-neutral-600" },
-  Ativa: { rotulo: "Inscrições abertas", cor: "bg-emerald-50 text-emerald-700" },
+  Ativa: { rotulo: "Inscrições abertas", cor: "bg-marca-50 text-marca-700" },
   EmSelecao: { rotulo: "Em seleção", cor: "bg-amber-50 text-amber-700" },
   Finalizada: { rotulo: "Finalizada", cor: "bg-neutral-100 text-neutral-600" },
   Cancelada: { rotulo: "Cancelada", cor: "bg-red-50 text-red-700" },
@@ -26,7 +26,7 @@ const ACOES_VAGA = {
 const STATUS = {
   Pendente: "bg-neutral-100 text-neutral-700",
   Entrevista: "bg-sky-50 text-sky-700",
-  Finalizado: "bg-emerald-50 text-emerald-700",
+  Finalizado: "bg-marca-50 text-marca-700",
 };
 
 /* próximos passos permitidos (os mesmos do trigger tg_candidaturas_andamento) */

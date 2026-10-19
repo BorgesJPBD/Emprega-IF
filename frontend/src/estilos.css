@@ -1,5 +1,18 @@
 @import "tailwindcss";
 
+/* Cor de destaque: o verde da identidade dos Institutos Federais, usado
+   com moderação (marca, palavras de destaque, ícones e estados). O resto
+   da interface segue neutro, como no protótipo. */
+@theme {
+  --color-marca-50: #effaf1;
+  --color-marca-100: #d8f3dd;
+  --color-marca-200: #b3e6bd;
+  --color-marca-500: #3aae4f;
+  --color-marca-600: #2f9e41;
+  --color-marca-700: #237d33;
+  --color-marca-800: #1d632b;
+}
+
 /* Tokens tirados do protótipo (Figuras 2 a 5): fundo cinza claro,
    cartão branco, tipografia neutra, ação primária em preto. */
 :root {

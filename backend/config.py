@@ -38,6 +38,13 @@ class Settings:
     MIGRAR_AO_INICIAR: bool = os.getenv("MIGRAR_AO_INICIAR", "true").lower() == "true"
     CARREGAR_DADOS_EXEMPLO: bool = os.getenv("CARREGAR_DADOS_EXEMPLO", "").lower() == "true"
 
+    # E-mail (Brevo, via API HTTPS). Sem a chave, nenhum e-mail é enviado.
+    BREVO_API_KEY: str = os.getenv("BREVO_API_KEY", "")
+    EMAIL_REMETENTE: str = os.getenv("EMAIL_REMETENTE", "")
+    EMAIL_REMETENTE_NOME: str = os.getenv("EMAIL_REMETENTE_NOME", "Emprega-IF")
+    # Endereço do site, usado nos links dos e-mails
+    SITE_URL: str = os.getenv("SITE_URL", "http://localhost:5173").rstrip("/")
+
     # Validação de vínculo com o IF (UC01, passo 3).
     # Vazio = aceita qualquer domínio (útil para testar).
     DOMINIOS_EMAIL_PERMITIDOS: list[str] = _lista(

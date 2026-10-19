@@ -200,7 +200,7 @@ export default function PublicarVaga() {
       <main className="mx-auto max-w-3xl px-5 py-14">
         <style>{ESTILO}</style>
         <div className="anima-entra rounded-2xl border border-neutral-200 bg-white p-8 text-center">
-          <CheckCircle2 className="mx-auto size-10 text-emerald-600" />
+          <CheckCircle2 className="mx-auto size-10 text-marca-600" />
           <h1 className="mt-4 text-2xl font-semibold tracking-tight text-neutral-900">Vaga publicada</h1>
           <p className="mt-2 text-sm text-neutral-500">
             “{publicada.titulo}” já aparece para os estudantes do IF.

@@ -1,3 +1,4 @@
+import Logo from "./Logo";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { LogOut, Menu, X } from "lucide-react";
@@ -34,16 +35,7 @@ export default function Cabecalho() {
     <header className="sticky top-0 z-50 w-full border-b border-black/8 bg-white/90 backdrop-blur-xl">
       <div className="mx-auto flex h-18 max-w-screen-xl items-center justify-between px-8">
         <Link to="/" className="flex items-center gap-3 transition-opacity hover:opacity-70">
-          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-            <rect width="32" height="32" rx="8" fill="#111111" />
-            <circle cx="8" cy="22" r="4" fill="white" />
-            <circle cx="24" cy="22" r="4" fill="white" />
-            <path d="M12 22 Q16 9 20 22" stroke="white" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-            <circle cx="16" cy="11.5" r="2.5" fill="white" />
-          </svg>
-          <span className="text-xl font-semibold tracking-tight text-neutral-900">
-            Emprega<span className="text-neutral-400">-IF</span>
-          </span>
+          <Logo tamanho={32} texto="text-xl" />
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">
@@ -75,7 +67,7 @@ export default function Cabecalho() {
               </Link>
             )}
             <div className="flex items-center gap-2.5 pl-1" title={usuario.email}>
-              <span className="grid size-8 place-items-center rounded-full bg-neutral-900 text-xs font-medium text-white">
+              <span className="grid size-8 place-items-center rounded-full bg-marca-600 text-xs font-medium text-white">
                 {primeiroNome(usuario.nome).charAt(0).toUpperCase()}
               </span>
               <div className="leading-tight">

@@ -19,6 +19,25 @@ const ICONES = {
   Logística: Truck,
 };
 
+/* Um toque de cor por área, só no ícone da vaga. Classes escritas por
+   inteiro para o Tailwind encontrar. */
+const CORES = {
+  Tecnologia: "bg-sky-50 text-sky-700",
+  Administrativo: "bg-amber-50 text-amber-700",
+  Marketing: "bg-rose-50 text-rose-700",
+  Design: "bg-violet-50 text-violet-700",
+  Vendas: "bg-orange-50 text-orange-700",
+  "Recursos Humanos": "bg-teal-50 text-teal-700",
+  Engenharia: "bg-slate-100 text-slate-700",
+  Logística: "bg-lime-50 text-lime-700",
+};
+
+/* Tipo da vaga: estágio no verde da marca, jovem aprendiz em azul. */
+export const COR_TIPO = {
+  "Estágio": "border-marca-200 bg-marca-50 text-marca-800",
+  "Jovem aprendiz": "border-sky-200 bg-sky-50 text-sky-800",
+};
+
 /** "08:00:00" -> "8:00" */
 const hora = (h) => h.slice(0, 5).replace(/^0/, "");
 
@@ -42,6 +61,7 @@ export function paraTela(v) {
     prazo: v.prazo_inscricao,
     situacao: v.situacao,
     Icone: ICONES[v.area] ?? Briefcase,
+    cor: CORES[v.area] ?? "bg-neutral-100 text-neutral-600",
     descricao: v.descricao ?? "",
     requisitos: v.requisitos,
     diferenciais: v.diferenciais,

@@ -99,8 +99,8 @@ function Contador({ alvo, sufixo, ativo }) {
 function PontoAoVivo() {
   return (
     <span className="relative flex size-2">
-      <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-60 motion-safe:animate-ping" />
-      <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
+      <span className="absolute inline-flex h-full w-full rounded-full bg-marca-500 opacity-60 motion-safe:animate-ping" />
+      <span className="relative inline-flex size-2 rounded-full bg-marca-500" />
     </span>
   );
 }
@@ -183,18 +183,18 @@ export default function Home() {
       <section className="relative overflow-hidden bg-white">
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_72%_45%,#e4e4e7_0%,transparent_62%)] opacity-70"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_72%_45%,#e4e4e7_0%,transparent_62%),radial-gradient(ellipse_at_8%_10%,#d8f3dd_0%,transparent_45%)] opacity-70"
         />
         <div className="relative mx-auto grid max-w-screen-xl items-center gap-14 px-8 py-20 lg:grid-cols-2 lg:py-28">
           <div>
-            <span className="anima-entra inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs text-neutral-600">
-              <PontoAoVivo /> Plataforma oficial do IF
+            <span className="anima-entra inline-flex items-center gap-2 rounded-full border border-marca-200 bg-marca-50 px-3 py-1 text-xs font-medium text-marca-800">
+              <PontoAoVivo /> Projeto de extensão · IFMS
             </span>
 
             <h1 className="mt-7 text-5xl font-semibold leading-[1.05] tracking-tight text-neutral-900 lg:text-6xl">
               <span className="anima-entra block" style={atraso(80)}>Conectamos</span>
               <span className="anima-entra block" style={atraso(170)}>
-                <span className="text-neutral-400">talentos</span> às
+                <span className="text-marca-600">talentos</span> às
               </span>
               <span className="anima-entra block" style={atraso(260)}>melhores vagas</span>
             </h1>
@@ -242,6 +242,7 @@ export default function Home() {
         <dl className="mx-auto grid max-w-screen-xl grid-cols-2 gap-10 px-8 py-14 lg:grid-cols-4">
           {NUMEROS.map((n) => (
             <div key={n.rotulo}>
+              <span className="mb-4 block h-1 w-8 rounded-full bg-marca-500" aria-hidden="true" />
               <dt className="sr-only">{n.rotulo}</dt>
               <dd className="text-4xl font-semibold tabular-nums tracking-tight text-neutral-900">
                 {numeros ? (
@@ -265,7 +266,7 @@ export default function Home() {
 
           <div className="mt-14 h-px bg-neutral-200" aria-hidden="true">
             <div
-              className={`h-px origin-left bg-neutral-900 transition-transform duration-[1800ms] ease-out motion-reduce:transition-none ${
+              className={`h-px origin-left bg-marca-600 transition-transform duration-[1800ms] ease-out motion-reduce:transition-none ${
                 passosVisiveis ? "scale-x-100" : "scale-x-0"
               }`}
             />
@@ -275,7 +276,9 @@ export default function Home() {
             {PASSOS.map(({ Icone, titulo, texto }, i) => (
               <li key={titulo} className="rounded-2xl border border-neutral-200 bg-neutral-100 p-8">
                 <div className="flex items-start justify-between">
-                  <Icone className="size-9 stroke-[1.4] text-neutral-500" />
+                  <span className="grid size-14 place-items-center rounded-2xl bg-marca-50 text-marca-600">
+                    <Icone className="size-7 stroke-[1.5]" />
+                  </span>
                   <span
                     className={`text-3xl font-semibold tabular-nums transition-colors duration-500 ${
                       passosVisiveis ? "text-neutral-900" : "text-neutral-300"

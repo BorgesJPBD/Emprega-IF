@@ -45,6 +45,7 @@ acadêmico do Instituto Federal.
 | Busca de vagas por palavra (Full Text Search) | completa |
 | Painel da empresa (vagas, candidatos, andamento) | completo |
 | Minhas candidaturas, com histórico de status | completa |
+| E-mail de confirmação de candidatura e de mudança de status | completo (Brevo) |
 | Vagas recomendadas (UC02) | pendente |
 
 ---
@@ -221,6 +222,11 @@ Se preferir começar do zero no Docker: `docker compose down -v` e depois
 - As tabelas e as vagas de exemplo são criadas sozinhas quando a API sobe
   (migrations e `CARREGAR_DADOS_EXEMPLO`). Um `git push` com migration nova
   atualiza o banco do Neon no próximo deploy.
+- **E-mails:** o plano grátis do Render bloqueia SMTP, então o envio usa a API do
+  [Brevo](https://www.brevo.com) (grátis, 300 e-mails por dia). No Brevo: crie a conta,
+  verifique um remetente em *Senders* e gere uma chave em *SMTP & API → API Keys*. No
+  Render, em `emprega-if-api` → *Environment*, preencha `BREVO_API_KEY` e
+  `EMAIL_REMETENTE` (o e-mail verificado). Sem a chave, o site funciona e só não envia.
 - No plano grátis a API "dorme" após 15 minutos sem acesso e leva cerca de 1 minuto
   para acordar: abra o site alguns minutos antes de apresentar.
 
@@ -379,7 +385,7 @@ Cada exceção prevista no UC01 tem uma resposta HTTP correspondente:
 | GET | `/empresas/setores` | setores (da tabela `setores`) |
 | POST | `/candidaturas` | candidata-se a uma vaga — **estudante logado** |
 | GET | `/candidaturas/minhas` | candidaturas do estudante logado, com histórico |
-| PATCH | `/candidaturas/{id}/status` | muda o andamento — **empresa dona da vaga** |
+| PATCH | `/candidaturas/{id}/status` | muda o andamento e avisa o estudante por e-mail — **empresa dona da vaga** |
 | GET | `/estatisticas` | totais da página inicial |
 | GET | `/health` | verifica a conexão com o banco |
 
