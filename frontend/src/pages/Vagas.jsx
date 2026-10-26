@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { ChevronDown, Search, SearchX } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { ChevronDown, Search, SearchX, X } from "lucide-react";
 
 import CartaoVaga from "../componentes/CartaoVaga";
 import { buscarVagas } from "../vagas";
@@ -35,41 +36,72 @@ function Seletor({ rotulo, todas, valor, lista, onChange }) {
   );
 }
 
+/* Filtros <-> endereço da página (/vagas?q=marketing&tipo=Estágio):
+   a busca feita na Home chega aqui, e o link pode ser compartilhado. */
+const lerUrl = (params) => ({
+  q: params.get("q") ?? "",
+  tipo: params.get("tipo") ?? "",
+  area: params.get("area") ?? "",
+  local: params.get("local") ?? "",
+});
+const paraUrl = (f) => Object.fromEntries(Object.entries(f).filter(([, v]) => v));
+
 export default function Vagas() {
-  const [rascunho, setRascunho] = useState(VAZIO); // o que está nos selects
-  const [filtros, setFiltros] = useState(VAZIO);   // o que foi aplicado em "Buscar vagas"
-  const [todas, setTodas] = useState([]);          // sem filtro, para montar as opções
+  const [params, setParams] = useSearchParams();
+  const inicial = lerUrl(params);
+  const [rascunho, setRascunho] = useState(inicial); // o que está no campo e nos selects
+  const [filtros, setFiltros] = useState(inicial);   // o que foi buscado por último
+  const [todas, setTodas] = useState([]);            // sem filtro, para montar as opções
   const [lista, setLista] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
+  const campo = useRef(null);
+  const pedido = useRef(0); // descarta respostas antigas quando a pessoa digita rápido
 
-  // primeira carga: todas as vagas abertas
-  useEffect(() => {
-    buscarVagas()
-      .then((vagas) => { setTodas(vagas); setLista(vagas); })
-      .catch((e) => setErro(e.message))
-      .finally(() => setCarregando(false));
-  }, []);
-
-  // a filtragem acontece no banco (GET /vagas?tipo=...&area=...&localizacao=...)
+  // a filtragem acontece no banco (GET /vagas?q=...&tipo=...&area=...&localizacao=...)
   async function aplicar(novos) {
+    const meu = ++pedido.current;
     setFiltros(novos);
+    setParams(paraUrl(novos), { replace: true });
     setCarregando(true);
     setErro("");
     try {
-      setLista(await buscarVagas({ q: novos.q, tipo: novos.tipo, area: novos.area, localizacao: novos.local }));
+      const vagas = await buscarVagas({ q: novos.q, tipo: novos.tipo, area: novos.area, localizacao: novos.local });
+      if (meu === pedido.current) setLista(vagas);
     } catch (e) {
-      setErro(e.message);
+      if (meu === pedido.current) setErro(e.message);
     } finally {
-      setCarregando(false);
+      if (meu === pedido.current) setCarregando(false);
     }
   }
+
+  // primeira carga: as opções dos filtros e a busca que veio no endereço
+  useEffect(() => {
+    buscarVagas().then(setTodas).catch(() => setTodas([]));
+    aplicar(inicial);
+    // no computador, o cursor já começa no campo de busca
+    if (window.matchMedia("(min-width: 768px)").matches) campo.current?.focus();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // busca enquanto digita, 300 ms depois da última tecla
+  useEffect(() => {
+    if (rascunho.q === filtros.q) return;
+    const espera = setTimeout(() => aplicar({ ...filtros, q: rascunho.q }), 300);
+    return () => clearTimeout(espera);
+  }, [rascunho.q]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const TIPOS = opcoes(todas, "tipo");
   const AREAS = opcoes(todas, "area");
   const LOCAIS = opcoes(todas, "local");
 
-  const alterar = (campo) => (valor) => setRascunho((atual) => ({ ...atual, [campo]: valor }));
+  const alterar = (nome) => (valor) => setRascunho((atual) => ({ ...atual, [nome]: valor }));
+
+  // tipo, área e local filtram assim que a pessoa escolhe
+  const escolher = (nome) => (valor) => {
+    const novos = { ...rascunho, [nome]: valor };
+    setRascunho(novos);
+    aplicar(novos);
+  };
 
   function buscar(evento) {
     evento.preventDefault();
@@ -96,18 +128,31 @@ export default function Vagas() {
         <div className="relative w-full md:basis-full">
           <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-neutral-400" />
           <input
-            type="search"
-            aria-label="Buscar vagas por palavra"
-            placeholder="Busque por palavra: desenvolvimento, design, vendas..."
+            ref={campo}
+            type="text"
+            inputMode="search"
+            enterKeyHint="search"
+            aria-label="Digite o nome da vaga"
+            placeholder="Digite o nome da vaga: desenvolvimento, design, vendas..."
             value={rascunho.q}
             maxLength={100}
             onChange={(e) => alterar("q")(e.target.value)}
-            className="w-full rounded-xl border border-neutral-200 bg-white py-3 pl-11 pr-4 text-sm text-neutral-800 placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-900/10"
+            className="w-full rounded-xl border border-neutral-200 bg-white py-3.5 pl-11 pr-11 text-base text-neutral-800 placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-900/10"
           />
+          {rascunho.q && (
+            <button
+              type="button"
+              aria-label="Apagar a busca"
+              onClick={() => { setRascunho({ ...rascunho, q: "" }); campo.current?.focus(); }}
+              className="absolute right-3 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-full text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-700"
+            >
+              <X className="size-4" />
+            </button>
+          )}
         </div>
-        <Seletor rotulo="Tipo" todas="Todas" valor={rascunho.tipo} lista={TIPOS} onChange={alterar("tipo")} />
-        <Seletor rotulo="Área" todas="Todas" valor={rascunho.area} lista={AREAS} onChange={alterar("area")} />
-        <Seletor rotulo="Local" todas="Todos" valor={rascunho.local} lista={LOCAIS} onChange={alterar("local")} />
+        <Seletor rotulo="Tipo" todas="Todas" valor={rascunho.tipo} lista={TIPOS} onChange={escolher("tipo")} />
+        <Seletor rotulo="Área" todas="Todas" valor={rascunho.area} lista={AREAS} onChange={escolher("area")} />
+        <Seletor rotulo="Local" todas="Todos" valor={rascunho.local} lista={LOCAIS} onChange={escolher("local")} />
         <button
           type="submit"
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-neutral-900 px-8 py-3 text-sm font-medium text-white transition hover:bg-black md:w-auto"
@@ -119,7 +164,7 @@ export default function Vagas() {
       <p className="mt-8 text-xs text-neutral-500" aria-live="polite">
         {carregando
           ? "Carregando vagas..."
-          : lista.length === 1 ? "1 vaga encontrada" : `${lista.length} vagas encontradas`}
+          : `${lista.length === 1 ? "1 vaga encontrada" : `${lista.length} vagas encontradas`}${filtros.q ? ` para “${filtros.q}”` : ""}`}
       </p>
 
       {erro ? (

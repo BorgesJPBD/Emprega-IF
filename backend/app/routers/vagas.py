@@ -83,6 +83,11 @@ async def opcoes():
     }
 
 
+def _escapar_like(texto: str) -> str:
+    """% e _ digitados pelo usuário viram caracteres comuns no ILIKE."""
+    return texto.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
 @router.get("", response_model=list[VagaResposta], summary="Listar e buscar vagas abertas")
 async def listar_vagas(
     q: str | None = Query(None, max_length=100, description="Palavras para buscar no título e na descrição"),
@@ -101,9 +106,13 @@ async def listar_vagas(
     if q and q.strip():
         # websearch_to_tsquery aceita texto livre, como num buscador:
         # "estagio -remoto", "design OR marketing", "\"recursos humanos\""
+        # O Full Text Search só casa palavras inteiras; para quem digita só
+        # o começo do nome da vaga ("market", "desenv"), o título também é
+        # comparado por trecho, sem diferenciar acentos nem maiúsculas.
         consulta = "websearch_to_tsquery('portuguese', sem_acento(%s))"
-        condicoes.append(f"busca @@ {consulta}")
+        condicoes.append(f"(busca @@ {consulta} OR sem_acento(titulo) ILIKE sem_acento(%s))")
         params.append(q.strip())
+        params.append(f"%{_escapar_like(q.strip())}%")
         ordem = f"ts_rank(busca, {consulta}) DESC, {ordem}"
     if tipo:
         condicoes.append("tipo = %s")

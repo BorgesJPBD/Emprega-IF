@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, BadgeCheck, CalendarCheck, Search, Sparkles, UserPlus } from "lucide-react";
 
 import CartaoVaga from "../componentes/CartaoVaga";
@@ -86,6 +86,15 @@ export default function Home() {
   const [filtro, setFiltro] = useState("Todas");
   const [todasVagas, setTodasVagas] = useState([]);
   const [numeros, setNumeros] = useState(null);
+  const [termo, setTermo] = useState("");
+  const navegar = useNavigate();
+
+  // a busca do topo abre a página de vagas já filtrada (/vagas?q=...)
+  function buscarNoTopo(evento) {
+    evento.preventDefault();
+    const q = termo.trim();
+    navegar(q ? `/vagas?q=${encodeURIComponent(q)}` : "/vagas");
+  }
 
   // vagas e números reais do banco; se a API estiver fora do ar, as seções ficam vazias
   useEffect(() => {
@@ -117,20 +126,35 @@ export default function Home() {
               Você se candidata com um clique e acompanha cada etapa.
             </p>
 
-            <div className="mt-9 flex flex-wrap gap-3">
-              <Link
-                to="/vagas"
-                className="inline-flex items-center gap-2 rounded-xl bg-neutral-900 px-6 py-3.5 text-sm font-medium text-white transition hover:bg-black"
+            <form onSubmit={buscarNoTopo} role="search" className="mt-9 flex max-w-xl flex-col gap-2 rounded-2xl border border-neutral-200 bg-white p-2 shadow-sm focus-within:border-neutral-400 sm:flex-row">
+              <label className="relative flex-1">
+                <span className="sr-only">Qual vaga você procura?</span>
+                <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-neutral-400" />
+                <input
+                  type="text"
+                  inputMode="search"
+                  enterKeyHint="search"
+                  value={termo}
+                  maxLength={100}
+                  onChange={(e) => setTermo(e.target.value)}
+                  placeholder="Qual vaga você procura?"
+                  className="w-full rounded-xl bg-transparent py-3 pl-10 pr-3 text-base text-neutral-900 placeholder:text-neutral-400 focus:outline-none"
+                />
+              </label>
+              <button
+                type="submit"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-neutral-900 px-6 py-3 text-sm font-medium text-white transition hover:bg-black"
               >
-                Ver vagas abertas
-              </Link>
-              <Link
-                to="/para-empresas"
-                className="inline-flex items-center gap-2 rounded-xl border border-neutral-300 px-6 py-3.5 text-sm font-medium text-neutral-800 transition hover:border-neutral-900"
-              >
-                Sou empresa
-              </Link>
-            </div>
+                Buscar vagas
+              </button>
+            </form>
+
+            <p className="mt-4 text-sm text-neutral-500">
+              Ou{" "}
+              <Link to="/vagas" className="font-medium text-neutral-900 underline-offset-4 hover:underline">veja todas as vagas</Link>
+              {" "}· É empresa?{" "}
+              <Link to="/para-empresas" className="font-medium text-neutral-900 underline-offset-4 hover:underline">Publique uma vaga</Link>
+            </p>
 
             <ul className="mt-10 flex flex-wrap gap-x-6 gap-y-3 text-sm text-neutral-600">
               {VANTAGENS.map(({ Icone, texto }) => (
