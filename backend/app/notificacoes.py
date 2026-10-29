@@ -168,5 +168,28 @@ async def boas_vindas(email: str, nome: str, papel: str) -> None:
     await enviar_email(email, nome, "Bem-vindo ao Emprega-IF", html, texto)
 
 
+async def link_redefinir_senha(email: str, nome: str, link: str) -> None:
+    """Link de uso único para criar uma nova senha (vale por 1 hora)."""
+    primeiro_nome = nome.split()[0]
+    html = _modelo(
+        "Crie uma nova senha",
+        [
+            f"Olá, {escape(primeiro_nome)}!",
+            "Recebemos um pedido para criar uma nova senha na sua conta do Emprega-IF. "
+            "Clique no botão abaixo para escolher a nova senha.",
+            "O link vale por <strong>1 hora</strong> e só pode ser usado uma vez. "
+            "Se não foi você que pediu, ignore este e-mail: sua senha atual continua valendo.",
+        ],
+        "Criar nova senha",
+        link,
+    )
+    texto = (
+        f"Olá, {primeiro_nome}!\n\nPara criar uma nova senha no Emprega-IF, acesse:\n{link}\n\n"
+        "O link vale por 1 hora e só pode ser usado uma vez. Se não foi você que pediu, "
+        "ignore este e-mail.\n\nEmprega-IF · Projeto de extensão do IFMS"
+    )
+    await enviar_email(email, nome, "Criar uma nova senha no Emprega-IF", html, texto)
+
+
 def email_configurado() -> bool:
     return bool(settings.BREVO_API_KEY and settings.EMAIL_REMETENTE)

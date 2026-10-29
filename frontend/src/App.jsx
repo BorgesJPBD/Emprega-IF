@@ -16,6 +16,8 @@ import DetalheVaga from "./pages/DetalheVaga";
 import PainelEmpresa from "./pages/PainelEmpresa";
 import MinhasCandidaturas from "./pages/MinhasCandidaturas";
 import QuemSomos from "./pages/QuemSomos";
+import RecuperarSenha from "./pages/RecuperarSenha";
+import RedefinirSenha from "./pages/RedefinirSenha";
 import Termos from "./pages/Termos";
 import Privacidade from "./pages/Privacidade";
 
@@ -51,10 +53,8 @@ export default function App() {
             element={<CadastroEmpresa />}
           />
           <Route path="/login" element={<Login />} />
-          <Route
-            path="/recuperar-senha"
-            element={<EmBreve titulo="Recuperar senha" figura="RN-05" />}
-          />
+          <Route path="/recuperar-senha" element={<RecuperarSenha />} />
+          <Route path="/redefinir-senha" element={<RedefinirSenha />} />
           <Route path="/vagas" element={<Vagas />} />
           <Route path="/vagas/nova" element={<PublicarVaga />} />
           <Route path="/vagas/:id" element={<DetalheVaga />} />

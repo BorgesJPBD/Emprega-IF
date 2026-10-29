@@ -78,7 +78,7 @@ export default function Login() {
                 />
                 <span className="text-xs text-neutral-500">Lembrar-me</span>
               </label>
-              <a href="#" className="text-xs text-neutral-500 hover:text-neutral-900">Esqueceu a senha?</a>
+              <Link to="/recuperar-senha" className="text-xs text-neutral-500 hover:text-neutral-900">Esqueceu a senha?</Link>
             </div>
 
             <button

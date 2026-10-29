@@ -103,6 +103,22 @@ class LoginEntrada(BaseModel):
     lembrar_me: bool = False
 
 
+class RecuperarSenhaEntrada(BaseModel):
+    email: EmailStr
+
+
+class RedefinirSenhaEntrada(BaseModel):
+    token: str = Field(min_length=20, max_length=200)
+    senha: str = Field(min_length=8, max_length=72)
+    confirmar_senha: str
+
+    @model_validator(mode="after")
+    def senhas_iguais(self):
+        if self.senha != self.confirmar_senha:
+            raise ValueError("As senhas não são iguais.")
+        return self
+
+
 class UsuarioLogado(BaseModel):
     id: UUID
     nome: str
