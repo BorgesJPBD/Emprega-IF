@@ -1,9 +1,5 @@
 import { Component } from "react";
 
-/**
- * Se qualquer tela quebrar ao renderizar, mostra o erro aqui em vez de deixar a
- * página branca. Em desenvolvimento exibe a mensagem técnica; em produção, só o aviso.
- */
 export default class ErroTela extends Component {
   state = { erro: null };
 
@@ -20,30 +16,30 @@ export default class ErroTela extends Component {
     if (!erro) return this.props.children;
 
     return (
-      <main className="mx-auto flex min-h-screen max-w-2xl flex-col justify-center px-6 py-16">
-        <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">Algo deu errado nesta tela</h1>
-        <p className="mt-2 text-sm text-neutral-500">
+      <main className="mx-auto flex min-h-screen max-w-2xl flex-col justify-center px-4 py-16 sm:px-6">
+        <h1 className="text-3xl">Algo deu errado nesta tela</h1>
+        <p className="mt-2 text-[17px] text-tinta-media">
           Recarregue a página. Se o erro continuar, avise a equipe do projeto.
         </p>
 
         {import.meta.env.DEV && (
-          <pre className="mt-6 max-h-72 overflow-auto rounded-xl border border-red-200 bg-red-50 p-4 text-xs leading-relaxed text-red-800">
+          <pre className="aviso aviso--erro mt-6 block max-h-72 overflow-auto whitespace-pre-wrap font-mono text-xs font-normal leading-relaxed">
             {String(erro?.message || erro)}
             {erro?.stack ? `\n\n${erro.stack.split("\n").slice(1, 6).join("\n")}` : ""}
           </pre>
         )}
 
-        <div className="mt-8 flex gap-3">
+        <div className="mt-8 flex flex-wrap gap-3">
           <button
             type="button"
             onClick={() => window.location.reload()}
-            className="rounded-xl bg-neutral-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-black"
+            className="botao"
           >
             Recarregar página
           </button>
           <a
             href="/"
-            className="rounded-xl border border-neutral-300 px-5 py-3 text-sm font-medium text-neutral-900 transition hover:border-neutral-900"
+            className="botao botao--contorno"
           >
             Ir para o início
           </a>

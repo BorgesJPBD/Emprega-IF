@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 
 import Campo from "../componentes/Campo";
+import PaginaFormulario from "../componentes/PaginaFormulario";
 import { ErroApi, post } from "../api";
 
 const INICIAL = {
@@ -43,7 +44,6 @@ export default function CadastroEstudante() {
 
   function alterar(campo, valor) {
     setForm((atual) => ({ ...atual, [campo]: valor }));
-    // Limpa o erro do campo assim que a pessoa começa a corrigi-lo.
     setErros(({ [campo]: _, ...resto }) => resto);
   }
 
@@ -74,44 +74,35 @@ export default function CadastroEstudante() {
 
   if (criado) {
     return (
-      <main className="pagina">
-        <span className="etiqueta">Para estudantes</span>
-        <h1>Cadastro criado</h1>
-        <p className="pagina__apoio">
-          Tudo pronto, {criado.nome.split(" ")[0]}. Entre na plataforma para ver
-          as vagas recomendadas para {criado.curso}.
+      <PaginaFormulario
+        titulo="Cadastro criado"
+        resumo={`Tudo pronto, ${criado.nome.split(" ")[0]}. Entre na plataforma para ver as vagas para ${criado.curso}.`}
+      >
+        <p className="aviso aviso--ok">
+          Perfil de {criado.nome} criado com o e-mail {criado.email_if}.
         </p>
-        <div className="cartao">
-          <p className="aviso aviso--ok">
-            Perfil de {criado.nome} criado com o e-mail {criado.email_if}.
-          </p>
-          <div style={{ marginTop: "1.1rem" }}>
-            <Link className="botao botao--largo" to="/login">
-              Ir para o login
-            </Link>
-          </div>
-          <p className="rodape-cartao">
-            <button className="botao-texto" onClick={() => setCriado(null)}>
-              Cadastrar outro estudante
-            </button>
-          </p>
-        </div>
-      </main>
+        <Link className="botao botao--largo mt-5" to="/login">
+          Ir para o login
+        </Link>
+        <p className="mt-4 text-center">
+          <button type="button" className="link text-[15px]" onClick={() => setCriado(null)}>
+            Cadastrar outro estudante
+          </button>
+        </p>
+      </PaginaFormulario>
     );
   }
 
   return (
-    <main className="pagina">
-      <span className="etiqueta">Para estudantes</span>
-      <h1>Criar conta</h1>
-      <p className="pagina__apoio">
-        Preencha seus dados para começar a candidatar-se
-      </p>
+    <PaginaFormulario
+      titulo="Criar conta de estudante"
+      resumo="Preencha seus dados uma vez e use o perfil em todas as candidaturas."
+      voltar={{ para: "/cadastro", rotulo: "Tipos de conta" }}
+    >
+      <form onSubmit={enviar} noValidate>
+        {avisoErro && <p role="alert" className="aviso aviso--erro mb-6">{avisoErro}</p>}
 
-      <form className="cartao" onSubmit={enviar} noValidate>
-        {avisoErro && <p className="aviso aviso--erro">{avisoErro}</p>}
-
-        <div className="grade">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <Campo
             nome="nome"
             rotulo="Nome completo"
@@ -175,6 +166,8 @@ export default function CadastroEstudante() {
             <select
               id="periodo"
               name="periodo"
+              className="entrada"
+              aria-invalid={erros.periodo ? "true" : undefined}
               value={form.periodo}
               onChange={(e) => alterar("periodo", e.target.value)}
             >
@@ -210,8 +203,9 @@ export default function CadastroEstudante() {
           />
         </div>
 
-        <label className="termos" htmlFor="aceite_termos">
+        <label className="mt-7 flex items-start gap-3 text-[15px]" htmlFor="aceite_termos">
           <input
+            className="caixa"
             id="aceite_termos"
             name="aceite_termos"
             type="checkbox"
@@ -220,25 +214,24 @@ export default function CadastroEstudante() {
           />
           <span>
             Aceito os{" "}
-            <Link to="/termos" target="_blank" rel="noopener" className="underline">termos de uso</Link>{" "}
+            <Link to="/termos" target="_blank" rel="noopener" className="link">termos de uso</Link>{" "}
             e a{" "}
-            <Link to="/privacidade" target="_blank" rel="noopener" className="underline">política de privacidade</Link>
+            <Link to="/privacidade" target="_blank" rel="noopener" className="link">política de privacidade</Link>
             {erros.aceite_termos && (
-              <span className="campo__erro"> — {erros.aceite_termos}</span>
+              <span className="erro-campo"> — {erros.aceite_termos}</span>
             )}
           </span>
         </label>
 
-        <button className="botao botao--largo" type="submit" disabled={enviando}>
+        <button className="botao botao--largo mt-6 min-h-14 text-lg" type="submit" disabled={enviando}>
           {enviando ? "Criando conta..." : "Criar conta"}
         </button>
 
-        <p className="rodape-cartao">
-          Já tem uma conta? <Link to="/login">Entrar</Link>
-          <br />
-          É uma empresa? <Link to="/cadastro/empresa">Cadastre-se aqui</Link>
-        </p>
+        <div className="mt-6 space-y-1.5 border-t border-linha pt-5 text-[15px]">
+          <p>Já tem uma conta? <Link className="link" to="/login">Entrar</Link></p>
+          <p>É uma empresa? <Link className="link" to="/cadastro/empresa">Cadastre-se aqui</Link></p>
+        </div>
       </form>
-    </main>
+    </PaginaFormulario>
   );
 }

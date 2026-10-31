@@ -1,12 +1,60 @@
 import Logo from "./Logo";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { LogOut, Menu, X } from "lucide-react";
+import { Bookmark, LogOut, Menu, X } from "lucide-react";
 
 import { lerSessao, limparSessao } from "../auth";
+import { useSalvas } from "../salvos";
 
-/** "João Pedro Dutra" -> "João" */
 const primeiroNome = (nome = "") => nome.trim().split(/\s+/)[0];
+
+const LINKS = [
+  { rotulo: "Vagas", para: "/vagas" },
+  { rotulo: "Para estudantes", para: "/para-estudantes" },
+  { rotulo: "Para empresas", para: "/para-empresas" },
+];
+
+// const CHAVE_TEMA = "emprega-if:tema";
+//
+// /** Tema em uso: o escolhido aqui ou, sem escolha, o do sistema. */
+// function temaAtual() {
+//   const escolhido = document.documentElement.dataset.tema;
+//   if (escolhido) return escolhido;
+//   return window.matchMedia("(prefers-color-scheme: dark)").matches ? "escuro" : "claro";
+// }
+// function BotaoTema() {
+//   const [tema, setTema] = useState(temaAtual);
+//   function alternar() {
+//     const novo = tema === "escuro" ? "claro" : "escuro";
+//     document.documentElement.dataset.tema = novo;
+//     try { localStorage.setItem(CHAVE_TEMA, novo); } catch { /* sem armazenamento */ }
+//     setTema(novo);
+//   }
+//   return (
+//     <button
+//       type="button"
+//       onClick={alternar}
+//       aria-label={tema === "escuro" ? "Usar tema claro" : "Usar tema escuro"}
+//       className="grid size-11 place-items-center rounded-full text-tinta-media transition-colors duration-150 hover:bg-superficie-2 hover:text-floresta"
+//     >
+//       {tema === "escuro" ? <Sun className="size-5" /> : <Moon className="size-5" />}
+//     </button>
+//   );
+// }
+
+function Salvas() {
+  const salvas = useSalvas();
+  return (
+    <Link
+      to="/vagas?salvas=1"
+      aria-label={`Vagas salvas: ${salvas.length}`}
+      className="inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-tinta-media transition-colors duration-150 hover:bg-superficie-2 hover:text-floresta"
+    >
+      <Bookmark className="size-[18px]" fill={salvas.length ? "currentColor" : "none"} />
+      <span key={salvas.length} className="conta-sobe mono text-sm font-bold">{salvas.length}</span>
+    </Link>
+  );
+}
 
 export default function Cabecalho() {
   const [menuAberto, setMenuAberto] = useState(false);
@@ -14,19 +62,12 @@ export default function Cabecalho() {
   const { pathname } = useLocation();
   const navegar = useNavigate();
 
-  // relê a sessão a cada troca de página: assim o cabeçalho
-  // atualiza logo depois do login, sem precisar recarregar
   useEffect(() => {
     setSessao(lerSessao());
     setMenuAberto(false);
   }, [pathname]);
 
-  // página atual sublinhada em verde (/vagas/123 conta como "Vagas")
   const ativa = (rota) => pathname === rota || (rota === "/vagas" && /^\/vagas\/(?!nova)/.test(pathname));
-  const linkNav = (ativo) =>
-    `relative py-1 text-sm transition-colors after:absolute after:inset-x-0 after:-bottom-[25px] after:h-0.5 after:rounded-full ${
-      ativo ? "text-neutral-900 after:bg-marca-600" : "text-neutral-500 hover:text-neutral-900 after:bg-transparent"
-    }`;
 
   const usuario = sessao?.usuario;
   const ehEmpresa = usuario?.papel === "empresa";
@@ -39,115 +80,109 @@ export default function Cabecalho() {
   }
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-black/8 bg-white/90 backdrop-blur-xl">
-      <div className="mx-auto flex h-18 max-w-screen-xl items-center justify-between px-8">
-        <Link to="/" className="flex items-center gap-3 transition-opacity hover:opacity-70">
-          <Logo tamanho={32} texto="text-xl" />
+    <header className="sticky top-0 z-50 w-full border-b border-linha bg-fundo">
+      <div className="container-site flex h-16 items-center justify-between gap-4 sm:h-18">
+        <Link to="/" className="shrink-0" aria-label="Emprega IF, página inicial">
+          <Logo altura={30} />
         </Link>
 
-        <nav className="hidden items-center gap-8 md:flex">
-          <Link to="/vagas" aria-current={ativa("/vagas") ? "page" : undefined} className={linkNav(ativa("/vagas"))}>
-            Vagas
-          </Link>
-          <Link to="/para-estudantes" aria-current={ativa("/para-estudantes") ? "page" : undefined} className={linkNav(ativa("/para-estudantes"))}>
-            Para Estudantes
-          </Link>
-          <Link to="/para-empresas" aria-current={ativa("/para-empresas") ? "page" : undefined} className={linkNav(ativa("/para-empresas"))}>
-            Para Empresas
-          </Link>
+        <nav aria-label="Principal" className="hidden h-full items-stretch gap-1 lg:flex">
+          {LINKS.map(({ rotulo, para }) => (
+            <Link
+              key={para}
+              to={para}
+              aria-current={ativa(para) ? "page" : undefined}
+              className={`relative flex items-center px-3 text-[15px] font-semibold transition-colors duration-150 ${
+                ativa(para) ? "text-floresta" : "text-tinta-media hover:text-floresta"
+              }`}
+            >
+              {rotulo}
+              {ativa(para) && <span className="absolute inset-x-3 -bottom-px h-[3px] bg-lima" aria-hidden="true" />}
+            </Link>
+          ))}
         </nav>
 
-        {usuario ? (
-          <div className="hidden items-center gap-3 md:flex">
-            <Link
-              to={ehEmpresa ? "/painel" : "/minhas-candidaturas"}
-              className="rounded-lg px-3 py-2 text-sm text-neutral-500 transition-colors hover:text-neutral-900"
-            >
-              {ehEmpresa ? "Painel" : "Minhas candidaturas"}
-            </Link>
-            {ehEmpresa && (
-              <Link
-                to="/vagas/nova"
-                className="rounded-lg border border-black/12 bg-neutral-100 px-4 py-2 text-sm text-neutral-700 transition-all hover:border-black/20 hover:bg-neutral-200"
-              >
-                Publicar vaga
-              </Link>
-            )}
-            <div className="flex items-center gap-2.5 pl-1" title={usuario.email}>
-              <span className="grid size-8 place-items-center rounded-full bg-marca-600 text-xs font-medium text-white">
-                {primeiroNome(usuario.nome).charAt(0).toUpperCase()}
-              </span>
-              <div className="leading-tight">
-                <p className="max-w-40 truncate text-sm font-medium text-neutral-900">
-                  {ehEmpresa ? usuario.nome : primeiroNome(usuario.nome)}
-                </p>
-                <p className="text-[11px] text-neutral-400">{ehEmpresa ? "Empresa" : "Estudante"}</p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={sair}
-              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-neutral-500 transition-colors hover:text-neutral-900"
-            >
-              <LogOut className="size-4" /> Sair
-            </button>
-          </div>
-        ) : (
-          <div className="hidden items-center gap-3 md:flex">
-            <Link to="/login" className="rounded-lg px-4 py-2 text-sm text-neutral-500 transition-colors hover:text-neutral-900">
-              Entrar
-            </Link>
-            <Link
-              to="/vagas/nova"
-              className="rounded-lg border border-black/12 bg-neutral-100 px-4 py-2 text-sm text-neutral-700 transition-all hover:border-black/20 hover:bg-neutral-200"
-            >
-              Publicar vaga
-            </Link>
-            <Link
-              to="/cadastro"
-              className="rounded-lg bg-neutral-900 px-4 py-2 text-sm font-medium text-white transition-all hover:bg-neutral-800"
-            >
-              Cadastrar-se
-            </Link>
-          </div>
-        )}
+        <div className="flex items-center gap-1">
+          <Salvas />
+          {/* <BotaoTema /> */}
 
-        <button
-          className="flex size-9 items-center justify-center rounded-lg text-neutral-500 hover:text-neutral-900 md:hidden"
-          onClick={() => setMenuAberto(!menuAberto)}
-        >
-          {menuAberto ? <X className="size-5" /> : <Menu className="size-5" />}
-        </button>
+          {usuario ? (
+            <div className="ml-2 hidden items-center gap-2 lg:flex">
+              <Link to={ehEmpresa ? "/painel" : "/minhas-candidaturas"} className="botao botao--contorno botao--compacto">
+                {ehEmpresa ? "Painel" : "Minhas candidaturas"}
+              </Link>
+              {ehEmpresa && (
+                <Link to="/vagas/nova" className="botao botao--lima botao--compacto">Publicar vaga</Link>
+              )}
+              <div className="ml-2 flex items-center gap-2.5 border-l border-linha pl-4" title={usuario.email}>
+                <span className="grid size-9 place-items-center rounded-full border border-[#0a3622] bg-lima font-display text-sm font-extrabold text-[#0a3622]">
+                  {primeiroNome(usuario.nome).charAt(0).toUpperCase()}
+                </span>
+                <div className="leading-tight">
+                  <p className="max-w-40 truncate text-sm font-semibold">{ehEmpresa ? usuario.nome : primeiroNome(usuario.nome)}</p>
+                  <p className="dado text-[10px] text-tinta-media">{ehEmpresa ? "Empresa" : "Estudante"}</p>
+                </div>
+              </div>
+              <button type="button" onClick={sair} className="ml-1 inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-tinta-media transition-colors hover:bg-superficie-2 hover:text-floresta">
+                <LogOut className="size-4" /> Sair
+              </button>
+            </div>
+          ) : (
+            <div className="ml-2 hidden items-center gap-2 lg:flex">
+              <Link to="/login" className="px-3 py-2 text-[15px] font-semibold text-tinta-media transition-colors hover:text-floresta">Entrar</Link>
+              <Link to="/vagas/nova" className="botao botao--contorno botao--compacto">Publicar vaga</Link>
+              <Link to="/cadastro" className="botao botao--lima botao--compacto">Cadastrar-se</Link>
+            </div>
+          )}
+
+          <button
+            type="button"
+            aria-label={menuAberto ? "Fechar menu" : "Abrir menu"}
+            aria-expanded={menuAberto}
+            className="grid size-11 place-items-center rounded-full text-floresta hover:bg-superficie-2 lg:hidden"
+            onClick={() => setMenuAberto(!menuAberto)}
+          >
+            {menuAberto ? <X className="size-6" /> : <Menu className="size-6" />}
+          </button>
+        </div>
       </div>
 
       {menuAberto && (
-        <div className="border-t border-black/8 bg-white px-8 py-4 md:hidden">
-          <nav className="flex flex-col gap-4">
-            <Link to="/vagas" className="text-sm text-neutral-600" onClick={() => setMenuAberto(false)}>Vagas</Link>
-            <Link to="/para-estudantes" className="text-sm text-neutral-600" onClick={() => setMenuAberto(false)}>Para Estudantes</Link>
-            <Link to="/para-empresas" className="text-sm text-neutral-600" onClick={() => setMenuAberto(false)}>Para Empresas</Link>
+        <div className="border-t border-linha bg-superficie lg:hidden">
+          <nav aria-label="Principal" className="container-site flex flex-col py-2">
+            {LINKS.map(({ rotulo, para }) => (
+              <Link
+                key={para}
+                to={para}
+                aria-current={ativa(para) ? "page" : undefined}
+                className="flex min-h-13 items-center justify-between border-b border-linha font-display text-xl font-bold tracking-tight text-floresta"
+              >
+                {rotulo}
+                {ativa(para) && <span className="aqui">Você está aqui</span>}
+              </Link>
+            ))}
             {(!usuario || ehEmpresa) && (
-              <Link to="/vagas/nova" className="text-sm text-neutral-600" onClick={() => setMenuAberto(false)}>Publicar vaga</Link>
+              <Link to="/vagas/nova" className="flex min-h-13 items-center border-b border-linha font-display text-xl font-bold tracking-tight text-floresta">Publicar vaga</Link>
             )}
             {usuario && (
-              <Link to={ehEmpresa ? "/painel" : "/minhas-candidaturas"} className="text-sm text-neutral-600" onClick={() => setMenuAberto(false)}>
+              <Link to={ehEmpresa ? "/painel" : "/minhas-candidaturas"} className="flex min-h-13 items-center border-b border-linha font-display text-xl font-bold tracking-tight text-floresta">
                 {ehEmpresa ? "Painel" : "Minhas candidaturas"}
               </Link>
             )}
             {usuario ? (
-              <div className="flex items-center justify-between border-t border-black/8 pt-4">
-                <span className="text-sm text-neutral-900">
+              <div className="flex items-center justify-between py-4">
+                <span className="text-sm font-semibold">
                   {ehEmpresa ? usuario.nome : primeiroNome(usuario.nome)}
-                  <span className="text-neutral-400"> · {ehEmpresa ? "Empresa" : "Estudante"}</span>
+                  <span className="font-normal text-tinta-media"> · {ehEmpresa ? "Empresa" : "Estudante"}</span>
                 </span>
-                <button type="button" onClick={sair} className="inline-flex items-center gap-1.5 text-sm text-neutral-600">
+                <button type="button" onClick={sair} className="inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold">
                   <LogOut className="size-4" /> Sair
                 </button>
               </div>
             ) : (
-              <div className="flex gap-3 pt-2">
-                <Link to="/login" className="flex-1 rounded-lg border border-black/12 py-2 text-center text-sm text-neutral-700" onClick={() => setMenuAberto(false)}>Entrar</Link>
-                <Link to="/cadastro" className="flex-1 rounded-lg bg-neutral-900 py-2 text-center text-sm font-medium text-white" onClick={() => setMenuAberto(false)}>Cadastrar-se</Link>
+              <div className="grid grid-cols-2 gap-3 py-4">
+                <Link to="/login" className="botao botao--contorno">Entrar</Link>
+                <Link to="/cadastro" className="botao botao--lima">Cadastrar-se</Link>
               </div>
             )}
           </nav>

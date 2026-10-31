@@ -1,6 +1,7 @@
-// Rodape.jsx
-import Logo from "./Logo";
 import { Link } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
+
+import Logo from "./Logo";
 
 const COLUNAS = [
   {
@@ -8,15 +9,20 @@ const COLUNAS = [
     links: [
       { rotulo: "Buscar vagas", para: "/vagas" },
       { rotulo: "Criar perfil", para: "/cadastro/estudante" },
+      { rotulo: "Como funciona", para: "/para-estudantes" },
     ],
   },
   {
     titulo: "Empresas",
-    links: [{ rotulo: "Criar conta empresarial", para: "/cadastro/empresa" }],
+    links: [
+      { rotulo: "Criar conta empresarial", para: "/cadastro/empresa" },
+      { rotulo: "Publicar vaga", para: "/vagas/nova" },
+      { rotulo: "Por que publicar aqui", para: "/para-empresas" },
+    ],
   },
   {
     titulo: "Acesso",
-    links: [{ rotulo: "Fazer login", para: "/login" }],
+    links: [{ rotulo: "Entrar", para: "/login" }],
   },
   {
     titulo: "Institucional",
@@ -32,27 +38,31 @@ export default function Rodape() {
   const ano = new Date().getFullYear();
 
   return (
-    <footer className="w-full bg-neutral-900 px-8 py-16 text-neutral-400">
-      <div className="mx-auto max-w-screen-xl">
-        <div className="mb-14 flex items-center gap-3">
-          <Logo tamanho={28} texto="text-lg" claro />
+    <footer className="sobre-placa w-full bg-painel-2 text-white">
+      <div className="container-site py-14">
+        <div className="flex flex-col gap-6 border-b border-white/20 pb-10 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <Logo altura={36} claro />
+            <p className="mt-4 max-w-sm text-[15px] leading-relaxed text-white/80">
+              Estágios e vagas de jovem aprendiz para estudantes do Instituto Federal de
+              Mato Grosso do Sul, num só lugar.
+            </p>
+          </div>
+          <Link to="/vagas" className="botao botao--claro self-start sm:self-auto">
+            Ver vagas abertas <ArrowRight className="seta size-5" />
+          </Link>
         </div>
-        <p className="-mt-10 mb-14 max-w-sm text-sm leading-relaxed text-neutral-400">
-          Estágios e vagas de jovem aprendiz para estudantes do Instituto Federal de
-          Mato Grosso do Sul, num só lugar.
-        </p>
 
-        <div className="grid grid-cols-2 gap-10 md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-10 pt-10 md:grid-cols-4">
           {COLUNAS.map((coluna) => (
             <div key={coluna.titulo}>
-              <h3 className="mb-4 text-sm font-medium text-white">
-                {coluna.titulo}
-              </h3>
-              <ul className="space-y-3">
+              <h2 className="font-display text-lg font-bold tracking-tight text-white">{coluna.titulo}</h2>
+              <ul className="mt-3">
                 {coluna.links.map((link) => (
                   <li key={link.rotulo}>
-                    <Link to={link.para} className="text-sm text-neutral-400 transition-colors hover:text-white">
+                    <Link to={link.para} className="group flex items-center justify-between gap-2 border-b border-white/12 py-2.5 text-[15px] text-white/80 transition-colors hover:text-white">
                       {link.rotulo}
+                      <ArrowRight className="size-4 shrink-0 opacity-50 transition group-hover:translate-x-0.5 group-hover:opacity-100" />
                     </Link>
                   </li>
                 ))}
@@ -61,9 +71,9 @@ export default function Rodape() {
           ))}
         </div>
 
-        <div className="mt-14 flex flex-col items-start justify-between gap-4 border-t border-white/10 pt-8 sm:flex-row sm:items-center">
-          <p className="text-xs text-neutral-500">© {ano} Emprega-IF</p>
-          <p className="text-xs text-neutral-500">Projeto de extensão do IFMS. Não é um serviço oficial do Instituto Federal.</p>
+        <div className="mt-12 flex flex-col gap-2 text-sm text-white/70 sm:flex-row sm:justify-between">
+          <p>© {ano} Emprega IF</p>
+          <p>Projeto de extensão do IFMS. Não é um serviço oficial do Instituto Federal.</p>
         </div>
       </div>
     </footer>

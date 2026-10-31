@@ -1,18 +1,12 @@
 import PaginaInstitucional from "../componentes/PaginaInstitucional";
 
 const CONTEUDO = {
-  etiqueta: "Para empresas",
   titulo: "Contrate os talentos do Instituto Federal",
   subtitulo:
     "Publique suas vagas de estágio e jovem aprendiz diretamente para " +
-    "estudantes do IF, com formação técnica e alinhada à sua necessidade.",
+    "estudantes do IF, com formação técnica e alinhada à sua necessidade. Publicar não custa nada.",
   acaoPrincipal: { rotulo: "Criar conta empresarial", para: "/cadastro/empresa" },
   acaoSecundaria: { rotulo: "Publicar vaga", para: "/vagas/nova" },
-  numeros: [
-    { valor: "0", rotulo: "custo para publicar" },
-    { valor: "100%", rotulo: "candidatos do IF" },
-    { valor: "2", rotulo: "tipos: estágio e aprendiz" },
-  ],
   passos: [
     {
       titulo: "Crie a conta da empresa",
@@ -49,8 +43,8 @@ const CONTEUDO = {
     {
       titulo: "Publicação sem burocracia",
       texto:
-        "Um formulário e a vaga entra no ar, já no conjunto que alimenta as " +
-        "recomendações automáticas para os estudantes.",
+        "Um formulário e a vaga entra no ar, visível para todos os estudantes " +
+        "na busca de vagas.",
     },
     {
       titulo: "Conformidade",

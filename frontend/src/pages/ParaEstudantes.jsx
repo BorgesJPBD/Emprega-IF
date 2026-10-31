@@ -1,18 +1,12 @@
 import PaginaInstitucional from "../componentes/PaginaInstitucional";
 
 const CONTEUDO = {
-  etiqueta: "Para estudantes",
   titulo: "Sua primeira oportunidade começa aqui",
   subtitulo:
     "Vagas de estágio e jovem aprendiz reunidas num lugar só, pensadas para quem " +
-    "está começando. Sem currículo complicado e sem burocracia.",
+    "está começando. Gratuito, para os níveis médio, técnico e superior, e sem burocracia.",
   acaoPrincipal: { rotulo: "Criar meu perfil", para: "/cadastro/estudante" },
   acaoSecundaria: { rotulo: "Ver vagas", para: "/vagas" },
-  numeros: [
-    { valor: "100%", rotulo: "gratuito para estudantes" },
-    { valor: "3", rotulo: "níveis: médio, técnico e superior" },
-    { valor: "1", rotulo: "clique para se candidatar" },
-  ],
   passos: [
     {
       titulo: "Crie seu perfil",
@@ -21,10 +15,10 @@ const CONTEUDO = {
         "minutos e não exige experiência anterior.",
     },
     {
-      titulo: "Receba recomendações",
+      titulo: "Encontre a vaga",
       texto:
-        "O sistema cruza seu perfil com as vagas publicadas e mostra primeiro " +
-        "as mais compatíveis com sua área e seu nível.",
+        "Busque por palavra ou filtre por tipo, área e cidade. Dá para olhar " +
+        "todas as vagas sem precisar de login.",
     },
     {
       titulo: "Candidate-se",
@@ -94,7 +88,7 @@ const CONTEUDO = {
   chamadaFinal: {
     titulo: "Pronto para a primeira oportunidade?",
     texto:
-      "Crie seu perfil agora e comece a receber vagas compatíveis com seu curso.",
+      "Crie seu perfil agora e candidate-se às vagas abertas para o seu curso.",
     rotulo: "Criar meu perfil",
     para: "/cadastro/estudante",
   },

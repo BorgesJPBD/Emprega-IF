@@ -18,7 +18,6 @@ export function mascaraTelefone(valor) {
   return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
 }
 
-/** "120000" -> "1.200,00" (o que a pessoa digita vira centavos). */
 export function mascaraMoeda(valor) {
   const d = apenasDigitos(valor);
   if (!d) return "";
@@ -28,10 +27,8 @@ export function mascaraMoeda(valor) {
   });
 }
 
-/** "1.200,00" -> 1200 */
 export const valorEmNumero = (valor) => Number(apenasDigitos(valor)) / 100;
 
-/** Confere os dois dígitos verificadores (mesma regra do backend). */
 export function cnpjValido(cnpj) {
   const d = apenasDigitos(cnpj);
   if (d.length !== 14 || /^(\d)\1+$/.test(d)) return false;

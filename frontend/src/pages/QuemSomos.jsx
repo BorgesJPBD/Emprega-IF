@@ -1,18 +1,7 @@
 import { Link } from "react-router-dom";
 
 import PaginaTexto from "../componentes/PaginaTexto";
-import { EMAIL_CONTATO } from "../contato";
-
-const EQUIPE = [
-  "Fernando Tinno Venceslau",
-  "Fernando Washington Silva",
-  "Fillype Oliveira Amorim",
-  "Gabriel Corrêa de Abreu Guanais",
-  "Hideki Wakui Oi",
-  "João Pedro Borges Dutra",
-  "João Victor Carrenho Alves",
-  "Matheus Costa Mendes",
-];
+import { EMAIL_CONTATO, EQUIPE, ORIENTADOR } from "../contato";
 
 export default function QuemSomos() {
   return (
@@ -43,7 +32,7 @@ export default function QuemSomos() {
             <>
               <p>Projeto desenvolvido pelos estudantes:</p>
               <ul>{EQUIPE.map((nome) => <li key={nome}>{nome}</li>)}</ul>
-              <p>Orientação: Prof. Apio Carnielo e Silva.</p>
+              <p>Orientação: {ORIENTADOR}.</p>
             </>
           ),
         },
@@ -61,7 +50,7 @@ export default function QuemSomos() {
           conteudo: EMAIL_CONTATO ? (
             <p>
               Dúvidas, sugestões ou pedidos sobre seus dados:{" "}
-              <a className="font-medium text-marca-700 underline" href={`mailto:${EMAIL_CONTATO}`}>{EMAIL_CONTATO}</a>.
+              <a className="link" href={`mailto:${EMAIL_CONTATO}`}>{EMAIL_CONTATO}</a>.
             </p>
           ) : (
             <p>Dúvidas, sugestões ou pedidos sobre seus dados: procure a equipe do projeto no IFMS.</p>
@@ -71,9 +60,9 @@ export default function QuemSomos() {
           titulo: "Comece agora",
           conteudo: (
             <p>
-              <Link className="font-medium text-marca-700 underline" to="/vagas">Veja as vagas abertas</Link>{" "}
+              <Link className="link" to="/vagas">Veja as vagas abertas</Link>{" "}
               ou{" "}
-              <Link className="font-medium text-marca-700 underline" to="/cadastro">crie sua conta</Link>.
+              <Link className="link" to="/cadastro">crie sua conta</Link>.
             </p>
           ),
         },

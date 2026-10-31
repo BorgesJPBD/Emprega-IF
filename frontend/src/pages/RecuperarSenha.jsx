@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { MailCheck } from "lucide-react";
+import { ArrowRight, KeyRound, MailCheck } from "lucide-react";
 
 import { post } from "../api";
 import Campo from "../componentes/Campo";
@@ -29,55 +29,53 @@ export default function RecuperarSenha() {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-72px)] items-center justify-center bg-[#f4f4f5] px-4 py-16">
-      <div className="w-full max-w-sm">
-        <div className="mb-8">
-          <h1 className="text-3xl font-semibold tracking-tight text-neutral-900">Esqueceu a senha?</h1>
-          <p className="mt-1.5 text-sm text-neutral-500">Informe o e-mail da sua conta e enviamos um link para criar uma nova senha.</p>
+    <main className="container-site py-10 sm:py-16">
+      <div className="mx-auto grid max-w-4xl overflow-hidden rounded-cartao border border-linha bg-superficie md:grid-cols-[1fr_1.15fr]">
+        <div className="placa rounded-none px-6 py-8 sm:px-9 sm:py-10">
+          <span className="picto"><KeyRound className="size-5" /></span>
+          <h1 className="mt-6 text-4xl">Esqueci a senha</h1>
+          <p className="mt-3 text-lg leading-relaxed text-white/85">
+            Informe o e-mail da sua conta e enviamos um link para criar uma nova senha.
+          </p>
+          <p className="mt-8 border-t border-white/25 pt-5 text-[15px] text-white/85">
+            Lembrou a senha?
+          </p>
+          <Link to="/login" className="botao botao--branco botao--compacto mt-3">
+            Voltar para o login <ArrowRight className="seta size-4" />
+          </Link>
         </div>
 
-        <div className="rounded-2xl border border-black/8 bg-white p-6">
+        <div className="px-6 py-8 sm:px-9 sm:py-10">
           {enviado ? (
-            <div className="text-center" role="status">
-              <MailCheck className="mx-auto size-9 text-marca-600" />
-              <p className="mt-4 text-sm leading-relaxed text-neutral-700">{enviado}</p>
-              <p className="mt-2 text-xs text-neutral-500">O link vale por 1 hora.</p>
-              <button
-                type="button"
-                onClick={() => setEnviado("")}
-                className="mt-6 text-xs font-medium text-neutral-600 underline-offset-4 hover:text-neutral-900 hover:underline"
-              >
+            <div role="status">
+              <span className="picto"><MailCheck className="size-5" /></span>
+              <p className="mt-5 text-lg leading-relaxed">{enviado}</p>
+              <p className="mt-2 text-[15px] text-tinta-fraca">O link vale por 1 hora e só pode ser usado uma vez.</p>
+              <button type="button" onClick={() => setEnviado("")} className="link mt-6 text-[15px]">
                 Não chegou? Enviar de novo
               </button>
             </div>
           ) : (
-            <form className="space-y-4" onSubmit={enviar}>
+            <form className="space-y-5" onSubmit={enviar} noValidate>
               <Campo
                 nome="email"
                 rotulo="E-mail"
                 erro={erro}
                 type="email"
+                autoComplete="email"
                 placeholder="seu@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoFocus
                 required
               />
-              <button
-                type="submit"
-                disabled={carregando}
-                className="w-full rounded-xl bg-neutral-900 py-3 text-sm font-medium text-white transition-all hover:bg-neutral-800 disabled:opacity-60"
-              >
-                {carregando ? "Enviando..." : "Enviar link"}
+              <button type="submit" disabled={carregando} className="botao botao--largo min-h-14 text-lg">
+                {carregando ? "Enviando..." : <>Enviar link <ArrowRight className="seta size-5" /></>}
               </button>
             </form>
           )}
-
-          <div className="mt-5 border-t border-black/8 pt-5 text-center">
-            <Link to="/login" className="text-xs text-neutral-600 hover:text-neutral-900">Voltar para o login</Link>
-          </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

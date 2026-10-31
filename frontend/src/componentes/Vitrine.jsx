@@ -1,7 +1,29 @@
 import { useState } from "react";
 import { Bell, Check, Clock, MailCheck, MapPin, Search } from "lucide-react";
 
-import { COR_TIPO } from "../vagas";
+/* O quadro tem as próprias cores e fontes (as do visual anterior do site),
+   então continua idêntico mesmo com o tema novo das outras páginas. */
+const FONTE_TEXTO = "'Inter', ui-sans-serif, system-ui, sans-serif";
+const FONTE_TITULO = "'Bricolage Grotesque', 'Inter', ui-sans-serif, system-ui, sans-serif";
+
+/* Tipo da vaga: estágio em verde, jovem aprendiz em azul. */
+const COR_TIPO = {
+  "Estágio": "border-[#b3e6bd] bg-[#effaf1] text-[#1d632b]",
+  "Jovem aprendiz": "border-sky-200 bg-sky-50 text-sky-800",
+};
+
+/* Um toque de cor por área, no ícone da vaga. */
+const COR_AREA = {
+  Tecnologia: "bg-sky-50 text-sky-700",
+  Administrativo: "bg-amber-50 text-amber-700",
+  Marketing: "bg-rose-50 text-rose-700",
+  Design: "bg-violet-50 text-violet-700",
+  Vendas: "bg-orange-50 text-orange-700",
+  "Recursos Humanos": "bg-teal-50 text-teal-700",
+  Engenharia: "bg-slate-100 text-slate-700",
+  Logística: "bg-lime-50 text-lime-700",
+};
+const corDaArea = (v) => COR_AREA[v.area] ?? "bg-neutral-100 text-neutral-700";
 
 /* Vitrine do topo da Home: um carrossel com as três etapas do produto.
    1. Encontre: vagas reais, vindas do banco.
@@ -62,14 +84,14 @@ function CenaEncontre({ vagas, total }) {
       <div className="mt-4 flex-1 rounded-2xl bg-white p-4">
         <div className="flex items-center justify-between">
           <p className="text-sm font-medium text-neutral-900">Vagas abertas agora</p>
-          <span className="inline-flex items-center gap-1.5 text-[11px] text-marca-700">
-            <span className="size-1.5 rounded-full bg-marca-500 motion-safe:animate-pulse" /> ao vivo
+          <span className="inline-flex items-center gap-1.5 text-[11px] text-[#237d33]">
+            <span className="size-1.5 rounded-full bg-[#effaf1]0 motion-safe:animate-pulse" /> ao vivo
           </span>
         </div>
         <ul className="mt-3 divide-y divide-neutral-100">
           {vagas.map((v, i) => (
             <li key={v.id} className="vt-entra flex items-center gap-3 py-2.5" style={atraso(150 + i * 180)}>
-              <span className={`grid size-9 shrink-0 place-items-center rounded-lg ${v.cor}`}>
+              <span className={`grid size-9 shrink-0 place-items-center rounded-lg ${corDaArea(v)}`}>
                 <v.Icone className="size-4" />
               </span>
               <span className="min-w-0 flex-1">
@@ -95,12 +117,12 @@ function CenaCandidate({ vaga }) {
     <div className="flex h-full flex-col">
       <div className="rounded-2xl bg-white p-5">
         <div className="flex items-start justify-between gap-3">
-          <span className={`grid size-10 place-items-center rounded-xl ${vaga.cor}`}>
+          <span className={`grid size-10 place-items-center rounded-xl ${corDaArea(vaga)}`}>
             <vaga.Icone className="size-5" />
           </span>
           <SeloTipo tipo={vaga.tipo} />
         </div>
-        <p className="mt-4 text-lg font-semibold leading-snug text-neutral-900" style={{ fontFamily: "var(--font-titulo)" }}>
+        <p className="mt-4 text-lg font-semibold leading-snug text-neutral-900" style={{ fontFamily: FONTE_TITULO }}>
           {vaga.titulo}
         </p>
         <p className="text-sm text-neutral-500">{vaga.empresa}</p>
@@ -115,7 +137,7 @@ function CenaCandidate({ vaga }) {
             <span className="vt-sai rounded-lg bg-neutral-900 px-3 py-1.5 text-white [grid-area:1/1]" style={atraso(700)}>
               Candidatar-se
             </span>
-            <span className="vt-entra inline-flex items-center gap-1.5 rounded-lg bg-marca-600 px-3 py-1.5 text-white [grid-area:1/1]" style={atraso(800)}>
+            <span className="vt-entra inline-flex items-center gap-1.5 rounded-lg bg-[#2f9e41] px-3 py-1.5 text-white [grid-area:1/1]" style={atraso(800)}>
               <Check className="size-3.5" /> Candidatado
             </span>
           </span>
@@ -128,7 +150,7 @@ function CenaCandidate({ vaga }) {
           [MailCheck, "Confirmação no seu e-mail", "no mesmo minuto"],
         ].map(([Icone, texto, detalhe], i) => (
           <li key={texto} className="vt-entra flex items-start gap-3" style={atraso(1200 + i * 600)}>
-            <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-marca-600 text-white">
+            <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-[#2f9e41] text-white">
               <Icone className="size-3" strokeWidth={3} />
             </span>
             <span>
@@ -151,7 +173,7 @@ function CenaChamado({ vaga }) {
         <p className="mt-1 truncate text-sm font-medium text-neutral-900">{vaga.titulo}</p>
 
         <div className="mt-4 flex items-center gap-3 rounded-xl border border-neutral-100 bg-neutral-50 p-3">
-          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-marca-100 text-xs font-semibold text-marca-800">AS</span>
+          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[#d8f3dd] text-xs font-semibold text-[#1d632b]">AS</span>
           <span className="min-w-0 flex-1">
             <span className="block text-sm font-medium text-neutral-900">Ana Souza</span>
             <span className="block truncate text-xs text-neutral-500">Informática · 3º período</span>
@@ -171,7 +193,7 @@ function CenaChamado({ vaga }) {
 
       {/* o aviso que chega para o estudante */}
       <div className="vt-aviso mt-5 flex items-start gap-3 rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur" style={atraso(1900)}>
-        <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-marca-600 text-white">
+        <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#2f9e41] text-white">
           <Bell className="size-4" />
         </span>
         <span className="min-w-0">
@@ -198,6 +220,7 @@ export default function Vitrine({ vagas, total }) {
   return (
     <figure
       className="w-full max-w-lg overflow-hidden rounded-[28px] bg-neutral-900 p-5 sm:p-7 lg:ml-auto"
+      style={{ fontFamily: FONTE_TEXTO, lineHeight: 1.5 }}
       onMouseEnter={() => setPausado(true)}
       onMouseLeave={() => setPausado(false)}
       onFocus={() => setPausado(true)}
@@ -218,11 +241,11 @@ export default function Vitrine({ vagas, total }) {
             className={`text-left text-xs font-medium transition ${i === atual ? "text-white" : "text-neutral-500 hover:text-neutral-300"}`}
           >
             <span className="block h-0.5 overflow-hidden rounded-full bg-white/15">
-              {i < atual && <span className="block h-full bg-marca-500" />}
+              {i < atual && <span className="block h-full bg-[#effaf1]0" />}
               {i === atual && (
                 <span
                   key={atual}
-                  className={`block h-full bg-marca-500 ${REDUZ ? "" : "vt-barra"}`}
+                  className={`block h-full bg-[#effaf1]0 ${REDUZ ? "" : "vt-barra"}`}
                   style={{ animationPlayState: pausado ? "paused" : "running" }}
                   onAnimationEnd={proxima}
                 />

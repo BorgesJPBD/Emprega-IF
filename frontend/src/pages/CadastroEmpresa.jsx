@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { ErroApi, get, post } from "../api";
+import PaginaFormulario from "../componentes/PaginaFormulario";
 
-/* Lista de reserva: a lista oficial vem da tabela `setores` (GET /empresas/setores). */
 const SETORES_PADRAO = [
   "Tecnologia da Informação",
   "Educação",
@@ -31,16 +31,10 @@ const INICIAL = {
   aceite_termos: false,
 };
 
-const CLASSE_ROTULO = "block text-sm text-neutral-600 mb-1.5";
-const CLASSE_CONTROLE =
-  "w-full rounded-xl border bg-neutral-50 px-4 py-3 text-sm text-neutral-900 " +
-  "placeholder:text-neutral-400 focus:bg-white focus:outline-none " +
-  "focus:ring-2 focus:ring-neutral-900/10";
+const CLASSE_ROTULO = "rotulo";
 
 function classeCampo(temErro) {
-  return `${CLASSE_CONTROLE} ${
-    temErro ? "border-red-400" : "border-neutral-200 focus:border-neutral-400"
-  }`;
+  return temErro ? "entrada border-urgente bg-urgente-claro" : "entrada";
 }
 
 function mascaraCnpj(valor) {
@@ -67,7 +61,7 @@ function mascaraTelefone(valor) {
 
 function Erro({ mensagem }) {
   if (!mensagem) return null;
-  return <span className="mt-1 block text-xs text-red-600">{mensagem}</span>;
+  return <span className="erro-campo">{mensagem}</span>;
 }
 
 export default function CadastroEmpresa() {
@@ -112,83 +106,33 @@ export default function CadastroEmpresa() {
 
   if (criada) {
     return (
-      <main className="mx-auto max-w-3xl px-5 py-14">
-        <h1 className="text-3xl font-semibold tracking-tight text-neutral-900">
-          Conta criada
-        </h1>
-        <p className="mt-2 text-sm text-neutral-500">
-          {criada.razao_social} já pode publicar vagas para os estudantes do IF.
+      <PaginaFormulario
+        titulo="Conta criada"
+        resumo={`${criada.razao_social} já pode publicar vagas para os estudantes do IF.`}
+      >
+        <p className="aviso aviso--ok">
+          Cadastro concluído com o e-mail {criada.email_contato}.
         </p>
-
-        <div className="mt-7 rounded-2xl border border-neutral-200 bg-white p-7">
-          <p className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-            Cadastro concluído com o e-mail {criada.email_contato}.
-          </p>
-
-          <button
-            type="button"
-            onClick={() => navegar("/login")}
-            className="mt-5 w-full rounded-xl bg-neutral-900 py-3.5 text-sm font-medium text-white transition hover:bg-black"
-          >
-            Ir para o login
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setCriada(null)}
-            className="mt-4 w-full text-center text-sm text-neutral-500 hover:text-neutral-900"
-          >
+        <button type="button" onClick={() => navegar("/login")} className="botao botao--largo mt-5">
+          Ir para o login
+        </button>
+        <p className="mt-4 text-center">
+          <button type="button" onClick={() => setCriada(null)} className="link text-[15px]">
             Cadastrar outra empresa
           </button>
-        </div>
-      </main>
+        </p>
+      </PaginaFormulario>
     );
   }
 
   return (
-    <main className="mx-auto max-w-3xl px-5 py-10">
-      <Link
-        to="/"
-        className="inline-flex items-center gap-2 text-sm text-neutral-500 transition hover:text-neutral-900"
-      >
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
-          <line x1="19" y1="12" x2="5" y2="12" />
-          <polyline points="12 19 5 12 12 5" />
-        </svg>
-        Voltar
-      </Link>
-
-      <span className="mt-8 inline-block rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs text-neutral-600">
-        Para empresas
-      </span>
-
-      <h1 className="mt-4 text-4xl font-semibold tracking-tight text-neutral-900">
-        Criar conta empresarial
-      </h1>
-      <p className="mt-2 text-sm text-neutral-500">
-        Acesse os melhores talentos do Instituto Federal
-      </p>
-
-      <form
-        onSubmit={enviar}
-        noValidate
-        className="mt-7 rounded-2xl border border-neutral-200 bg-white p-7"
-      >
-        {avisoErro && (
-          <p className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {avisoErro}
-          </p>
-        )}
+    <PaginaFormulario
+      titulo="Criar conta empresarial"
+      resumo="Publique vagas e encontre estudantes do Instituto Federal."
+      voltar={{ para: "/cadastro", rotulo: "Tipos de conta" }}
+    >
+      <form onSubmit={enviar} noValidate>
+        {avisoErro && <p role="alert" className="aviso aviso--erro mb-6">{avisoErro}</p>}
 
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           <div>
@@ -334,63 +278,32 @@ export default function CadastroEmpresa() {
           </div>
         </div>
 
-        <label
-          className="mt-7 flex items-start gap-3 text-sm text-neutral-600"
-          htmlFor="aceite_termos"
-        >
+        <label className="mt-7 flex items-start gap-3 text-[15px]" htmlFor="aceite_termos">
           <input
             id="aceite_termos"
             type="checkbox"
-            className="mt-0.5 h-4 w-4 accent-neutral-900"
+            className="caixa"
             checked={form.aceite_termos}
             onChange={(e) => alterar("aceite_termos", e.target.checked)}
           />
           <span>
             Aceito os{" "}
-            <Link className="font-medium text-neutral-900 underline" to="/termos" target="_blank" rel="noopener">
-              termos de uso
-            </Link>{" "}
+            <Link className="link" to="/termos" target="_blank" rel="noopener">termos de uso</Link>{" "}
             e{" "}
-            <Link
-              className="font-medium text-neutral-900 underline"
-              to="/privacidade"
-              target="_blank"
-              rel="noopener"
-            >
-              política de privacidade
-            </Link>
-            {erros.aceite_termos && (
-              <span className="text-red-600"> — {erros.aceite_termos}</span>
-            )}
+            <Link className="link" to="/privacidade" target="_blank" rel="noopener">política de privacidade</Link>
+            {erros.aceite_termos && <span className="erro-campo inline"> — {erros.aceite_termos}</span>}
           </span>
         </label>
 
-        <button
-          type="submit"
-          disabled={enviando}
-          className="mt-6 w-full rounded-xl bg-neutral-900 py-3.5 text-sm font-medium text-white transition hover:bg-black disabled:cursor-progress disabled:opacity-60"
-        >
+        <button type="submit" disabled={enviando} className="botao botao--largo mt-6 min-h-14 text-lg">
           {enviando ? "Criando conta..." : "Criar conta empresarial"}
         </button>
 
-        <div className="mt-6 space-y-1.5 border-t border-neutral-200 pt-5 text-center text-sm text-neutral-500">
-          <p>
-            Já tem uma conta?{" "}
-            <Link className="font-medium text-neutral-900" to="/login">
-              Entrar
-            </Link>
-          </p>
-          <p>
-            É estudante?{" "}
-            <Link
-              className="font-medium text-neutral-900"
-              to="/cadastro/estudante"
-            >
-              Cadastre-se aqui
-            </Link>
-          </p>
+        <div className="mt-6 space-y-1.5 border-t border-linha pt-5 text-[15px]">
+          <p>Já tem uma conta? <Link className="link" to="/login">Entrar</Link></p>
+          <p>É estudante? <Link className="link" to="/cadastro/estudante">Cadastre-se aqui</Link></p>
         </div>
       </form>
-    </main>
+    </PaginaFormulario>
   );
 }

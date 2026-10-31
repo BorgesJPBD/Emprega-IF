@@ -1,11 +1,9 @@
 import PaginaTexto from "../componentes/PaginaTexto";
 import { EMAIL_CONTATO } from "../contato";
 
-/* Descreve o que o sistema realmente faz com os dados (ver backend/sql/migrations
-   e app/routers). Se o tratamento de dados mudar, atualize esta página junto. */
 export default function Privacidade() {
   const contato = EMAIL_CONTATO ? (
-    <a className="font-medium text-marca-700 underline" href={`mailto:${EMAIL_CONTATO}`}>{EMAIL_CONTATO}</a>
+    <a className="link" href={`mailto:${EMAIL_CONTATO}`}>{EMAIL_CONTATO}</a>
   ) : "a equipe do projeto no IFMS";
 
   return (

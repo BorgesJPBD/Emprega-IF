@@ -1,20 +1,17 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ArrowLeft, Briefcase, Building2, CheckCircle2, Lock } from "lucide-react";
+import { ArrowRight, Briefcase, Building2, CheckCircle2, Lock } from "lucide-react";
 
 import { ErroApi, get, post } from "../api";
 import { lerSessao } from "../auth";
 import CartaoVaga from "../componentes/CartaoVaga";
+import PlacaTitulo from "../componentes/PlacaTitulo";
 import { mascaraMoeda, valorEmNumero } from "../utils/formulario";
 
-/* mesmas listas do backend (app/schemas.py) */
 const TIPOS = ["Estágio", "Jovem aprendiz"];
-/* Lista de reserva: a lista oficial vem da tabela `areas` (GET /vagas/opcoes). */
 const AREAS_PADRAO = ["Tecnologia", "Administrativo", "Marketing", "Design", "Vendas", "Recursos Humanos", "Engenharia", "Logística", "Outra"];
 const MODALIDADES = ["Presencial", "Híbrido", "Remoto"];
 
-/* os nomes dos campos são os mesmos da API (POST /vagas), para os erros
-   que voltam do backend caírem embaixo do input certo */
 const INICIAL = {
   titulo: "", tipo: "", area: "", localizacao: "", modalidade: "",
   horario_entrada: "", horario_saida: "", carga_horaria: "", remuneracao: "", beneficios: "",
@@ -22,37 +19,25 @@ const INICIAL = {
   prazo_inscricao: "", numero_vagas: "1", aceite_termos: false,
 };
 
-/* ordem em que os campos aparecem: o primeiro com erro recebe o foco */
 const ORDEM = ["titulo", "tipo", "area", "localizacao", "modalidade", "horario_entrada", "horario_saida", "carga_horaria", "remuneracao", "beneficios", "descricao", "requisitos", "diferenciais", "prazo_inscricao", "numero_vagas", "aceite_termos"];
-
-const ESTILO = `
-@keyframes entra{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
-.anima-entra{animation:entra .6s cubic-bezier(.2,.7,.2,1) both}
-@media (prefers-reduced-motion:reduce){.anima-entra{animation:none}}
-`;
 
 const MEIO = "col-span-6 sm:col-span-3";
 const TERCO = "col-span-6 sm:col-span-2";
 const TODO = "col-span-6";
 
-const BASE =
-  "w-full rounded-xl border bg-neutral-50 px-4 py-3 text-sm text-neutral-900 placeholder:text-neutral-400 " +
-  "focus:bg-white focus:outline-none focus:ring-2 focus:ring-neutral-900/10";
-
-/** Rótulo + controle (input, select ou textarea) + erro. */
 function Campo({ nome, rotulo, erro, como = "input", lista = [], className = "", ...props }) {
   const comum = {
     id: nome,
     name: nome,
     "aria-invalid": erro ? "true" : undefined,
     "aria-describedby": erro ? `${nome}-erro` : undefined,
-    className: `${BASE} ${erro ? "border-red-400" : "border-neutral-200 focus:border-neutral-400"}`,
+    className: "entrada",
     ...props,
   };
 
   return (
     <div className={className}>
-      <label htmlFor={nome} className="mb-1.5 block text-xs font-medium text-neutral-600">{rotulo}</label>
+      <label htmlFor={nome} className="rotulo">{rotulo}</label>
 
       {como === "select" ? (
         <select {...comum}>
@@ -65,10 +50,10 @@ function Campo({ nome, rotulo, erro, como = "input", lista = [], className = "",
         <input {...comum} />
       )}
 
-      <div className="mt-1 flex justify-between gap-3 text-xs">
-        <span id={`${nome}-erro`} className="text-red-600">{erro}</span>
+      <div className="mt-1.5 flex min-h-5 justify-between gap-3 text-sm">
+        <span id={`${nome}-erro`} className="font-semibold text-urgente">{erro}</span>
         {como === "textarea" && props.maxLength && (
-          <span className="ml-auto text-neutral-400">{props.value.length}/{props.maxLength}</span>
+          <span className="ml-auto tabular-nums text-tinta-fraca">{props.value.length}/{props.maxLength}</span>
         )}
       </div>
     </div>
@@ -77,9 +62,9 @@ function Campo({ nome, rotulo, erro, como = "input", lista = [], className = "",
 
 function Secao({ titulo, children }) {
   return (
-    <section className="rounded-2xl border border-neutral-200 bg-white p-7">
-      <h2 className="text-sm font-semibold text-neutral-900">{titulo}</h2>
-      <div className="mt-5 grid grid-cols-6 gap-x-5">{children}</div>
+    <section className="cartao p-5 sm:p-7">
+      <h2 className="text-2xl">{titulo}</h2>
+      <div className="mt-5 grid grid-cols-6 gap-x-5 gap-y-2">{children}</div>
     </section>
   );
 }
@@ -99,10 +84,8 @@ function validar(f) {
   return e;
 }
 
-/** Grava na tabela `vagas`. A empresa vem do token de login, não do formulário. */
 const publicarVaga = (dados) => post("/vagas", dados);
 
-/** Campo opcional vazio vai como null, não como "" (o banco espera nulo). */
 function montarPayload(f) {
   const ouNulo = (v) => (v.trim() ? v.trim() : null);
   return {
@@ -117,25 +100,23 @@ function montarPayload(f) {
   };
 }
 
-/** Quem não está logado como empresa vê este aviso no lugar do formulário. */
 function SomenteEmpresa({ papel }) {
   const { pathname } = useLocation();
   return (
-    <main className="mx-auto max-w-xl px-5 py-20 text-center">
-      <style>{ESTILO}</style>
-      <div className="anima-entra rounded-2xl border border-neutral-200 bg-white p-8">
-        <Lock className="mx-auto size-9 text-neutral-400" />
-        <h1 className="mt-4 text-2xl font-semibold tracking-tight text-neutral-900">Publicar vaga</h1>
-        <p className="mt-2 text-sm text-neutral-500">
+    <main className="container-site py-16 sm:py-24">
+      <div className="cartao mx-auto max-w-xl px-6 py-10 sm:px-10">
+        <span className="picto"><Lock className="size-5" /></span>
+        <h1 className="mt-5 text-3xl">Publicar vaga</h1>
+        <p className="mt-2 text-[17px] text-tinta-media">
           {papel === "estudante"
             ? "Você está conectado com uma conta de estudante. Para publicar vagas, entre com a conta da empresa."
             : "Para publicar uma vaga, entre com a conta da sua empresa."}
         </p>
-        <Link to="/login" state={{ de: pathname }} className="mt-6 block w-full rounded-xl bg-neutral-900 py-3.5 text-sm font-medium text-white transition hover:bg-black">
-          Entrar como empresa
+        <Link to="/login" state={{ de: pathname }} className="botao botao--largo mt-7">
+          Entrar como empresa <ArrowRight className="seta size-5" />
         </Link>
-        <p className="mt-4 text-sm text-neutral-500">
-          Ainda não tem conta? <Link className="font-medium text-neutral-900" to="/cadastro/empresa">Criar conta empresarial</Link>
+        <p className="mt-4 text-[15px]">
+          Ainda não tem conta? <Link className="link" to="/cadastro/empresa">Criar conta empresarial</Link>
         </p>
       </div>
     </main>
@@ -197,34 +178,29 @@ export default function PublicarVaga() {
 
   if (publicada) {
     return (
-      <main className="mx-auto max-w-3xl px-5 py-14">
-        <style>{ESTILO}</style>
-        <div className="anima-entra rounded-2xl border border-neutral-200 bg-white p-8 text-center">
-          <CheckCircle2 className="mx-auto size-10 text-marca-600" />
-          <h1 className="mt-4 text-2xl font-semibold tracking-tight text-neutral-900">Vaga publicada</h1>
-          <p className="mt-2 text-sm text-neutral-500">
+      <main className="container-site py-16 sm:py-24">
+        <div className="cartao mx-auto max-w-xl px-6 py-10 sm:px-10">
+          <span className="picto"><CheckCircle2 className="size-5" /></span>
+          <h1 className="mt-5 text-3xl">Vaga publicada</h1>
+          <p className="mt-2 text-[17px] text-tinta-media">
             “{publicada.titulo}” já aparece para os estudantes do IF.
           </p>
-          <Link to={`/vagas/${publicada.id}`} className="mt-6 block w-full rounded-xl bg-neutral-900 py-3.5 text-sm font-medium text-white transition hover:bg-black">
-            Ver a vaga publicada
-          </Link>
-          <Link to="/painel" className="mt-3 block w-full rounded-xl border border-neutral-200 py-3.5 text-sm font-medium text-neutral-900 transition hover:border-neutral-900">
-            Ir para o painel
-          </Link>
-          <button type="button" onClick={() => setPublicada(null)} className="mt-4 text-sm text-neutral-500 hover:text-neutral-900">
-            Publicar outra vaga
-          </button>
+          <Link to={`/vagas/${publicada.id}`} className="botao botao--largo mt-7">Ver a vaga publicada</Link>
+          <Link to="/painel" className="botao botao--contorno botao--largo mt-3">Ir para o painel</Link>
+          <p className="mt-4 text-center">
+            <button type="button" onClick={() => setPublicada(null)} className="link text-[15px]">Publicar outra vaga</button>
+          </p>
         </div>
       </main>
     );
   }
 
-  /* prévia: o mesmo cartão que aparece em /vagas, atualizado enquanto a pessoa digita */
   const hora = (h) => h.replace(/^0/, "");
   const previa = {
     id: 0,
     Icone: Briefcase,
     titulo: form.titulo || "Título da vaga",
+    area: form.area || "Área",
     empresa: empresa.nome,
     tipo: form.tipo || "Tipo",
     local: form.localizacao || "Cidade - UF",
@@ -235,37 +211,25 @@ export default function PublicarVaga() {
   };
 
   return (
-    <main className="px-5 py-10">
-      <style>{ESTILO}</style>
-      <div className="mx-auto flex max-w-[1120px] items-start justify-center gap-8">
-        <div className="w-full max-w-3xl">
-          <Link to="/" className="inline-flex items-center gap-2 text-sm text-neutral-500 transition hover:text-neutral-900">
-            <ArrowLeft className="size-4" /> Voltar
-          </Link>
+    <main className="container-site pb-20 pt-6 sm:pt-10">
+      <PlacaTitulo
+        titulo="Publicar vaga"
+        resumo="Preencha as informações da vaga para os estudantes do IF encontrarem."
+        voltar={{ para: "/painel", rotulo: "Painel da empresa" }}
+      >
+        <div className="mt-6 inline-flex items-center gap-3 rounded-[4px] bg-painel-2 px-4 py-3">
+          <Building2 className="size-5" />
+          <div className="min-w-0">
+            <p className="text-sm text-white/80">Publicando como</p>
+            <p className="truncate font-bold">{empresa.nome} <span className="font-normal text-white/80">· {empresa.email}</span></p>
+          </div>
+        </div>
+      </PlacaTitulo>
 
-          <span className="mt-8 inline-block rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs text-neutral-600">
-            Para empresas
-          </span>
-          <h1 className="mt-4 text-4xl font-semibold tracking-tight text-neutral-900">Publicar vaga</h1>
-          <p className="mt-2 text-sm text-neutral-500">
-            Preencha as informações da vaga para conectar sua empresa aos melhores talentos do IF.
-          </p>
-
-          <form onSubmit={enviar} noValidate className="mt-8 space-y-6">
-            {avisoErro && (
-              <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{avisoErro}</p>
-            )}
-
-            <div className="flex items-center gap-4 rounded-2xl border border-neutral-200 bg-white p-5">
-              <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-neutral-100 text-neutral-600">
-                <Building2 className="size-5" />
-              </span>
-              <div className="min-w-0">
-                <p className="text-xs text-neutral-500">Publicando como</p>
-                <p className="truncate text-sm font-medium text-neutral-900">{empresa.nome}</p>
-                <p className="truncate text-xs text-neutral-400">{empresa.email}</p>
-              </div>
-            </div>
+      <div className="mt-4 flex items-start gap-6">
+        <div className="min-w-0 flex-1">
+          <form onSubmit={enviar} noValidate className="space-y-4">
+            {avisoErro && <p role="alert" className="aviso aviso--erro">{avisoErro}</p>}
 
             <Secao titulo="Detalhes da vaga">
               <Campo className={TODO} nome="titulo" rotulo="Título da vaga" placeholder="Ex: Estágio em Desenvolvimento Web" maxLength={100} {...ligar("titulo")} />
@@ -291,10 +255,10 @@ export default function PublicarVaga() {
               <Campo className={MEIO} nome="numero_vagas" rotulo="Número de vagas" type="number" min="1" inputMode="numeric" {...ligar("numero_vagas")} />
             </Secao>
 
-            <div>
-              <label className="flex items-start gap-3 text-sm text-neutral-600" htmlFor="aceite_termos">
+            <div className="cartao p-5 sm:p-7">
+              <label className="flex items-start gap-3 text-[15px]" htmlFor="aceite_termos">
                 <input
-                  id="aceite_termos" type="checkbox" className="mt-0.5 size-4 accent-neutral-900"
+                  id="aceite_termos" type="checkbox" className="caixa"
                   checked={form.aceite_termos} onChange={(ev) => alterar("aceite_termos", ev.target.checked)}
                   aria-invalid={erros.aceite_termos ? "true" : undefined}
                 />
@@ -304,25 +268,21 @@ export default function PublicarVaga() {
                   (Lei 11.788/2008 e CLT art. 428).
                 </span>
               </label>
-              {erros.aceite_termos && <p className="mt-1.5 text-xs text-red-600">{erros.aceite_termos}</p>}
+              {erros.aceite_termos && <p className="erro-campo">{erros.aceite_termos}</p>}
+
+              <button type="submit" disabled={enviando} className="botao botao--largo mt-6 min-h-14 text-lg">
+                {enviando ? "Publicando..." : <>Publicar vaga <ArrowRight className="seta size-5" /></>}
+              </button>
             </div>
-
-            <button
-              type="submit" disabled={enviando}
-              className="w-full rounded-xl bg-neutral-900 py-3.5 text-sm font-medium text-white transition hover:bg-black disabled:cursor-progress disabled:opacity-60"
-            >
-              {enviando ? "Publicando..." : "Publicar vaga"}
-            </button>
-
           </form>
         </div>
 
-        <aside aria-label="Prévia da vaga" className="sticky top-28 hidden w-80 shrink-0 xl:block">
-          <p className="mb-3 text-xs font-medium text-neutral-600">Prévia no mural de vagas</p>
+        <aside aria-label="Prévia da vaga" className="sticky top-24 hidden w-80 shrink-0 xl:block">
+          <p className="mb-3 text-[15px] font-bold">Prévia na lista de vagas</p>
           <div className="pointer-events-none select-none" aria-hidden="true">
             <CartaoVaga vaga={previa} />
           </div>
-          <p className="mt-3 text-xs text-neutral-400">Atualiza enquanto você preenche o formulário.</p>
+          <p className="mt-3 text-sm text-tinta-fraca">Atualiza enquanto você preenche o formulário.</p>
         </aside>
       </div>
     </main>

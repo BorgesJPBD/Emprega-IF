@@ -4,9 +4,6 @@ import { BrowserRouter } from "react-router-dom";
 
 import App from "./App";
 import ErroTela from "./componentes/ErroTela";
-// fontes embutidas no site (não dependem do Google Fonts)
-import "@fontsource-variable/bricolage-grotesque/opsz.css";
-import "@fontsource-variable/inter";
 import "./estilos.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(

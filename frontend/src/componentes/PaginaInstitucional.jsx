@@ -1,125 +1,79 @@
 import { Link } from "react-router-dom";
+import { ArrowRight, Check, Plus } from "lucide-react";
 
-/**
- * Layout das páginas "Para Estudantes" e "Para Empresas".
- * As duas têm a mesma estrutura e mudam só o conteúdo, então para ajustar
- * uma frase mexe-se no arquivo da página, não neste.
- */
+import Trajeto from "./Trajeto";
+
 export default function PaginaInstitucional({ conteudo }) {
   const {
-    etiqueta, titulo, subtitulo, acaoPrincipal, acaoSecundaria,
-    numeros, passos, beneficios, perguntas, chamadaFinal,
+    titulo, subtitulo, acaoPrincipal, acaoSecundaria,
+    passos, beneficios, perguntas, chamadaFinal,
   } = conteudo;
 
   return (
     <main>
-      <section className="mx-auto max-w-screen-xl px-8 py-20 text-center">
-        <span className="inline-block rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs text-neutral-600">
-          {etiqueta}
-        </span>
+      <section className="pt-6 sm:pt-10">
+        <div className="container-site">
+          <div className="placa placa--moldura px-6 py-9 sm:px-12 sm:py-12 lg:px-16">
+            <h1 className="max-w-4xl text-[2.5rem] sm:text-6xl">{titulo}</h1>
+            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-white/85 sm:text-xl">{subtitulo}</p>
 
-        <h1 className="mx-auto mt-6 max-w-3xl text-4xl font-semibold leading-tight tracking-tight text-neutral-900 sm:text-5xl">
-          {titulo}
-        </h1>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Link to={acaoPrincipal.para} className="botao botao--claro min-h-14 px-7 text-lg">
+                {acaoPrincipal.rotulo} <ArrowRight className="seta size-5" />
+              </Link>
+              {acaoSecundaria && (
+                <Link to={acaoSecundaria.para} className="botao botao--branco min-h-14 px-7 text-lg">
+                  {acaoSecundaria.rotulo}
+                </Link>
+              )}
+            </div>
 
-        <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-neutral-500">
-          {subtitulo}
-        </p>
-
-        <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
-          <Link
-            to={acaoPrincipal.para}
-            className="rounded-xl bg-neutral-900 px-6 py-3.5 text-sm font-medium text-white transition hover:bg-black"
-          >
-            {acaoPrincipal.rotulo}
-          </Link>
-          {acaoSecundaria && (
-            <Link
-              to={acaoSecundaria.para}
-              className="rounded-xl border border-neutral-300 px-6 py-3.5 text-sm font-medium text-neutral-900 transition hover:border-neutral-900"
-            >
-              {acaoSecundaria.rotulo}
-            </Link>
-          )}
+          </div>
         </div>
-
-        {numeros && (
-          <dl className="mx-auto mt-14 grid max-w-2xl grid-cols-3 gap-6 border-t border-neutral-200 pt-9">
-            {numeros.map((item) => (
-              <div key={item.rotulo}>
-                <dt className="text-2xl font-semibold text-neutral-900">
-                  {item.valor}
-                </dt>
-                <dd className="mt-1 text-xs text-neutral-500">{item.rotulo}</dd>
-              </div>
-            ))}
-          </dl>
-        )}
       </section>
 
-      <section className="border-y border-neutral-200 bg-white">
-        <div className="mx-auto max-w-screen-xl px-8 py-20">
-          <h2 className="text-center text-3xl font-semibold tracking-tight text-neutral-900">
-            Como funciona
-          </h2>
+      <section className="py-16 sm:py-24">
+        <div className="container-site">
+          <h2 className="text-4xl sm:text-5xl">Como funciona</h2>
+          <div className="mt-12">
+            <Trajeto paradas={passos} desenhar />
+          </div>
+        </div>
+      </section>
 
-          <ol className="mt-12 grid grid-cols-1 gap-10 md:grid-cols-3">
-            {passos.map((passo, indice) => (
-              <li key={passo.titulo}>
-                <span className="grid h-9 w-9 place-items-center rounded-full bg-neutral-900 text-sm font-medium text-white">
-                  {indice + 1}
+      <section className="border-y border-linha bg-superficie py-16 sm:py-24">
+        <div className="container-site">
+          <h2 className="text-4xl sm:text-5xl">Por que usar</h2>
+          <ul className="mt-10 grid gap-x-12 md:grid-cols-2">
+            {beneficios.map((beneficio) => (
+              <li key={beneficio.titulo} className="flex gap-4 border-t border-linha py-6">
+                <span className="mt-1 grid size-7 shrink-0 place-items-center rounded-[3px] bg-painel text-white">
+                  <Check className="size-4" strokeWidth={3} />
                 </span>
-                <h3 className="mt-5 text-lg font-medium text-neutral-900">
-                  {passo.titulo}
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-neutral-500">
-                  {passo.texto}
-                </p>
+                <div>
+                  <h3 className="text-xl">{beneficio.titulo}</h3>
+                  <p className="mt-2 text-[17px] leading-relaxed text-tinta-media">{beneficio.texto}</p>
+                </div>
               </li>
             ))}
-          </ol>
+          </ul>
         </div>
       </section>
 
-      <section className="mx-auto max-w-screen-xl px-8 py-20">
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-          {beneficios.map((beneficio) => (
-            <div
-              key={beneficio.titulo}
-              className="rounded-2xl border border-neutral-200 bg-white p-7"
-            >
-              <h3 className="text-base font-medium text-neutral-900">
-                {beneficio.titulo}
-              </h3>
-              <p className="mt-2 text-sm leading-relaxed text-neutral-500">
-                {beneficio.texto}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
+      <section className="py-16 sm:py-24">
+        <div className="container-site">
+          <h2 className="text-4xl sm:text-5xl">Perguntas frequentes</h2>
 
-      <section className="border-t border-neutral-200 bg-white">
-        <div className="mx-auto max-w-3xl px-8 py-20">
-          <h2 className="text-3xl font-semibold tracking-tight text-neutral-900">
-            Perguntas frequentes
-          </h2>
-
-          <div className="mt-9 divide-y divide-neutral-200 border-y border-neutral-200">
+          <div className="cartao mt-10 max-w-4xl divide-y divide-linha">
             {perguntas.map((item) => (
-              <details key={item.pergunta} className="group py-5">
-                <summary className="flex cursor-pointer items-center justify-between gap-4 text-sm font-medium text-neutral-900 marker:content-none">
+              <details key={item.pergunta} className="group">
+                <summary className="flex min-h-16 cursor-pointer items-center justify-between gap-4 px-5 py-4 text-lg font-extrabold marker:content-none hover:bg-superficie-2 sm:px-7 [&::-webkit-details-marker]:hidden">
                   {item.pergunta}
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
-                       stroke="currentColor" strokeWidth="2" strokeLinecap="round"
-                       strokeLinejoin="round"
-                       className="shrink-0 text-neutral-400 transition group-open:rotate-45"
-                       aria-hidden="true">
-                    <line x1="12" y1="5" x2="12" y2="19" />
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                  </svg>
+                  <span className="picto picto--pequeno transition-transform duration-150 group-open:rotate-45">
+                    <Plus className="size-4" strokeWidth={3} />
+                  </span>
                 </summary>
-                <p className="mt-3 text-sm leading-relaxed text-neutral-500">
+                <p className="px-5 pb-6 text-[17px] leading-relaxed text-tinta-media sm:px-7">
                   {item.resposta}
                 </p>
               </details>
@@ -128,20 +82,17 @@ export default function PaginaInstitucional({ conteudo }) {
         </div>
       </section>
 
-      <section className="mx-auto max-w-screen-xl px-8 py-20">
-        <div className="rounded-3xl bg-neutral-900 px-8 py-16 text-center">
-          <h2 className="mx-auto max-w-xl text-3xl font-semibold tracking-tight text-white">
-            {chamadaFinal.titulo}
-          </h2>
-          <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-neutral-400">
-            {chamadaFinal.texto}
-          </p>
-          <Link
-            to={chamadaFinal.para}
-            className="mt-8 inline-block rounded-xl bg-white px-6 py-3.5 text-sm font-medium text-neutral-900 transition hover:bg-neutral-200"
-          >
-            {chamadaFinal.rotulo}
-          </Link>
+      <section className="pb-16 sm:pb-24">
+        <div className="container-site">
+          <div className="placa flex flex-col gap-6 px-5 py-8 sm:px-10 sm:py-10 md:flex-row md:items-center md:justify-between lg:px-14">
+            <div>
+              <h2 className="max-w-xl text-3xl sm:text-4xl">{chamadaFinal.titulo}</h2>
+              <p className="mt-2 max-w-lg text-lg text-white/85">{chamadaFinal.texto}</p>
+            </div>
+            <Link to={chamadaFinal.para} className="botao botao--claro shrink-0">
+              {chamadaFinal.rotulo} <ArrowRight className="seta size-5" />
+            </Link>
+          </div>
         </div>
       </section>
     </main>

@@ -1,13 +1,3 @@
-/**
- * Sessão do usuário no navegador.
- *
- * Com "Lembrar-me" marcado, a sessão vai para o localStorage e sobrevive
- * ao fechamento do navegador. Sem ele, vai para o sessionStorage e morre
- * junto com a aba — que é o comportamento que a pessoa espera ao não
- * marcar a caixinha, e o mais seguro em computador compartilhado (o do
- * laboratório do IF, por exemplo).
- */
-
 const CHAVE = "emprega-if:sessao";
 
 export function salvarSessao({ access_token, usuario }, lembrar) {

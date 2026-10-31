@@ -5,7 +5,7 @@ import { EMAIL_CONTATO } from "../contato";
 
 export default function Termos() {
   const contato = EMAIL_CONTATO ? (
-    <a className="font-medium text-marca-700 underline" href={`mailto:${EMAIL_CONTATO}`}>{EMAIL_CONTATO}</a>
+    <a className="link" href={`mailto:${EMAIL_CONTATO}`}>{EMAIL_CONTATO}</a>
   ) : "a equipe do projeto no IFMS";
 
   return (
@@ -88,7 +88,7 @@ export default function Termos() {
           conteudo: (
             <p>
               O tratamento dos seus dados está descrito na{" "}
-              <Link className="font-medium text-marca-700 underline" to="/privacidade">política de privacidade</Link>.
+              <Link className="link" to="/privacidade">política de privacidade</Link>.
             </p>
           ),
         },

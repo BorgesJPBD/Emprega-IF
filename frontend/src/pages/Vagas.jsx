@@ -1,64 +1,40 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { ChevronDown, Search, SearchX, X } from "lucide-react";
+import { Bookmark, Search, SearchX, X } from "lucide-react";
 
+import AvisoExemplo from "../componentes/AvisoExemplo";
+import Botao from "../componentes/Botao";
 import CartaoVaga from "../componentes/CartaoVaga";
-import { buscarVagas } from "../vagas";
+import Pilula, { GrupoPilulas } from "../componentes/Pilula";
+import { useSalvas } from "../salvos";
+import { TURNOS_LIVRES, buscarVagas, cidadeDe, turnoDa } from "../vagas";
 
-const ESTILO = `
-@keyframes entra{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
-.anima-entra{animation:entra .6s cubic-bezier(.2,.7,.2,1) both}
-@media (prefers-reduced-motion:reduce){.anima-entra{animation:none}}
-`;
-
-/* opções dos filtros: só o que existe nas vagas abertas */
-const opcoes = (vagas, campo) =>
-  [...new Set(vagas.map((v) => v[campo]))].sort((a, b) => a.localeCompare(b, "pt-BR"));
-
-const VAZIO = { q: "", tipo: "", area: "", local: "" };
-
-function Seletor({ rotulo, todas, valor, lista, onChange }) {
-  return (
-    <div className="relative flex-1">
-      <select
-        aria-label={rotulo}
-        value={valor}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full appearance-none rounded-xl border border-neutral-200 bg-white px-4 py-3 pr-10 text-sm text-neutral-800 transition focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-900/10"
-      >
-        <option value="">{rotulo}: {todas}</option>
-        {lista.map((item) => (
-          <option key={item} value={item}>{rotulo}: {item}</option>
-        ))}
-      </select>
-      <ChevronDown className="pointer-events-none absolute right-4 top-1/2 size-4 -translate-y-1/2 text-neutral-400" />
-    </div>
-  );
+function opcoes(vagas, campo) {
+  const contagem = new Map();
+  vagas.forEach((v) => contagem.set(v[campo], (contagem.get(v[campo]) ?? 0) + 1));
+  return [...contagem].sort((a, b) => a[0].localeCompare(b[0], "pt-BR"));
 }
 
-/* Filtros <-> endereço da página (/vagas?q=marketing&tipo=Estágio):
-   a busca feita na Home chega aqui, e o link pode ser compartilhado. */
-const lerUrl = (params) => ({
-  q: params.get("q") ?? "",
-  tipo: params.get("tipo") ?? "",
-  area: params.get("area") ?? "",
-  local: params.get("local") ?? "",
-});
+const VAZIO = { q: "", tipo: "", area: "", local: "", turno: "", salvas: "" };
+
+const lerUrl = (params) => Object.fromEntries(Object.keys(VAZIO).map((k) => [k, params.get(k) ?? ""]));
 const paraUrl = (f) => Object.fromEntries(Object.entries(f).filter(([, v]) => v));
+
+const doisDigitos = (n) => String(n).padStart(2, "0");
 
 export default function Vagas() {
   const [params, setParams] = useSearchParams();
   const inicial = lerUrl(params);
-  const [rascunho, setRascunho] = useState(inicial); // o que está no campo e nos selects
-  const [filtros, setFiltros] = useState(inicial);   // o que foi buscado por último
-  const [todas, setTodas] = useState([]);            // sem filtro, para montar as opções
+  const [rascunho, setRascunho] = useState(inicial);
+  const [filtros, setFiltros] = useState(inicial);
+  const [todas, setTodas] = useState([]);
   const [lista, setLista] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
+  const salvas = useSalvas();
   const campo = useRef(null);
-  const pedido = useRef(0); // descarta respostas antigas quando a pessoa digita rápido
+  const pedido = useRef(0);
 
-  // a filtragem acontece no banco (GET /vagas?q=...&tipo=...&area=...&localizacao=...)
   async function aplicar(novos) {
     const meu = ++pedido.current;
     setFiltros(novos);
@@ -75,15 +51,12 @@ export default function Vagas() {
     }
   }
 
-  // primeira carga: as opções dos filtros e a busca que veio no endereço
   useEffect(() => {
     buscarVagas().then(setTodas).catch(() => setTodas([]));
     aplicar(inicial);
-    // no computador, o cursor já começa no campo de busca
     if (window.matchMedia("(min-width: 768px)").matches) campo.current?.focus();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // busca enquanto digita, 300 ms depois da última tecla
   useEffect(() => {
     if (rascunho.q === filtros.q) return;
     const espera = setTimeout(() => aplicar({ ...filtros, q: rascunho.q }), 300);
@@ -94,13 +67,15 @@ export default function Vagas() {
   const AREAS = opcoes(todas, "area");
   const LOCAIS = opcoes(todas, "local");
 
-  const alterar = (nome) => (valor) => setRascunho((atual) => ({ ...atual, [nome]: valor }));
-
-  // tipo, área e local filtram assim que a pessoa escolhe
-  const escolher = (nome) => (valor) => {
-    const novos = { ...rascunho, [nome]: valor };
+  const alternar = (nome, valor) => {
+    const novos = { ...rascunho, [nome]: rascunho[nome] === valor ? "" : valor };
     setRascunho(novos);
-    aplicar(novos);
+    if (nome === "turno" || nome === "salvas") {
+      setFiltros(novos);
+      setParams(paraUrl(novos), { replace: true });
+    } else {
+      aplicar(novos);
+    }
   };
 
   function buscar(evento) {
@@ -113,92 +88,155 @@ export default function Vagas() {
     aplicar(VAZIO);
   }
 
+  const visiveis = lista.filter((v) =>
+    (!filtros.turno || TURNOS_LIVRES[filtros.turno]?.includes(turnoDa(v))) &&
+    (!filtros.salvas || salvas.includes(String(v.id))));
+  const ativos = Object.values(filtros).filter(Boolean).length;
+
   return (
-    <main className="mx-auto max-w-screen-xl px-8 py-16">
-      <style>{ESTILO}</style>
+    <main className="container-site pb-28 pt-6 sm:pb-20 sm:pt-10">
+      <header className="flex flex-col gap-3 border-b border-linha pb-6 sm:flex-row sm:items-end sm:justify-between">
+        <h1 className="text-[clamp(2.75rem,7vw,5rem)]">
+          {filtros.salvas ? "Vagas salvas" : "Vagas abertas"}
+        </h1>
+        <p className="max-w-[38ch] text-[17px] text-tinta-media sm:text-right">
+          Explore sem fazer login. Toque num filtro para ligar, toque de novo para desligar.
+        </p>
+      </header>
 
-      <h1 className="text-5xl font-semibold tracking-tight text-neutral-900">Vagas disponíveis</h1>
-      <p className="mt-2 text-sm text-neutral-500">Explore as oportunidades sem precisar fazer login</p>
-
-      <form
-        onSubmit={buscar}
-        className="mt-10 flex flex-col gap-3 rounded-2xl border border-neutral-200 bg-white p-5 md:flex-row md:flex-wrap"
-      >
-        {/* busca textual no banco: título e descrição, sem diferenciar acentos */}
-        <div className="relative w-full md:basis-full">
-          <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-neutral-400" />
-          <input
-            ref={campo}
-            type="text"
-            inputMode="search"
-            enterKeyHint="search"
-            aria-label="Digite o nome da vaga"
-            placeholder="Digite o nome da vaga: desenvolvimento, design, vendas..."
-            value={rascunho.q}
-            maxLength={100}
-            onChange={(e) => alterar("q")(e.target.value)}
-            className="w-full rounded-xl border border-neutral-200 bg-white py-3.5 pl-11 pr-11 text-base text-neutral-800 placeholder:text-neutral-400 focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-900/10"
-          />
-          {rascunho.q && (
-            <button
-              type="button"
-              aria-label="Apagar a busca"
-              onClick={() => { setRascunho({ ...rascunho, q: "" }); campo.current?.focus(); }}
-              className="absolute right-3 top-1/2 grid size-7 -translate-y-1/2 place-items-center rounded-full text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-700"
-            >
-              <X className="size-4" />
-            </button>
-          )}
+      <form onSubmit={buscar} role="search" className="mt-6 grid gap-3 lg:grid-cols-12">
+        <div className="cartao p-5 lg:col-span-7">
+          <label htmlFor="busca-vagas" className="mb-2 block text-[15px] font-semibold text-floresta">Palavra-chave</label>
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-acao" />
+            <input
+              id="busca-vagas"
+              ref={campo}
+              type="text"
+              inputMode="search"
+              enterKeyHint="search"
+              placeholder="Cargo, área ou empresa"
+              value={rascunho.q}
+              maxLength={100}
+              onChange={(e) => setRascunho({ ...rascunho, q: e.target.value })}
+              className="entrada min-h-14 border-[1.5px] border-floresta pl-12 pr-12 text-lg"
+            />
+            {rascunho.q && (
+              <button
+                type="button"
+                aria-label="Apagar a busca"
+                onClick={() => { setRascunho({ ...rascunho, q: "" }); campo.current?.focus(); }}
+                className="absolute right-2 top-1/2 grid size-10 -translate-y-1/2 place-items-center rounded-full text-tinta-media hover:bg-superficie-2 hover:text-floresta"
+              >
+                <X className="size-5" />
+              </button>
+            )}
+          </div>
         </div>
-        <Seletor rotulo="Tipo" todas="Todas" valor={rascunho.tipo} lista={TIPOS} onChange={escolher("tipo")} />
-        <Seletor rotulo="Área" todas="Todas" valor={rascunho.area} lista={AREAS} onChange={escolher("area")} />
-        <Seletor rotulo="Local" todas="Todos" valor={rascunho.local} lista={LOCAIS} onChange={escolher("local")} />
-        <button
-          type="submit"
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-neutral-900 px-8 py-3 text-sm font-medium text-white transition hover:bg-black md:w-auto"
-        >
-          <Search className="size-4" /> Buscar vagas
-        </button>
+
+        <GrupoPilulas titulo="Modalidade" className="cartao p-5 lg:col-span-5">
+          {TIPOS.map(([tipo, n]) => (
+            <Pilula key={tipo} ativa={rascunho.tipo === tipo} conta={doisDigitos(n)} onClick={() => alternar("tipo", tipo)}>
+              {tipo}
+            </Pilula>
+          ))}
+        </GrupoPilulas>
+
+        <GrupoPilulas titulo="Cidade" className="cartao p-5 lg:col-span-5">
+          {LOCAIS.map(([local, n]) => (
+            <Pilula key={local} ativa={rascunho.local === local} conta={doisDigitos(n)} onClick={() => alternar("local", local)}>
+              <span className="dado">{cidadeDe(local)}</span>
+            </Pilula>
+          ))}
+        </GrupoPilulas>
+
+        <GrupoPilulas titulo="Área do seu curso" className="cartao p-5 lg:col-span-4">
+          {AREAS.map(([area, n]) => (
+            <Pilula key={area} ativa={rascunho.area === area} conta={doisDigitos(n)} onClick={() => alternar("area", area)}>
+              {area}
+            </Pilula>
+          ))}
+        </GrupoPilulas>
+
+        <GrupoPilulas titulo="Seu turno livre" className="cartao p-5 lg:col-span-3">
+          {Object.keys(TURNOS_LIVRES).map((turno) => (
+            <Pilula key={turno} ativa={rascunho.turno === turno} onClick={() => alternar("turno", turno)}>
+              {turno}
+            </Pilula>
+          ))}
+        </GrupoPilulas>
       </form>
 
-      <p className="mt-8 text-xs text-neutral-500" aria-live="polite">
-        {carregando
-          ? "Carregando vagas..."
-          : `${lista.length === 1 ? "1 vaga encontrada" : `${lista.length} vagas encontradas`}${filtros.q ? ` para “${filtros.q}”` : ""}`}
-      </p>
+      <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-[17px] font-semibold" aria-live="polite">
+          {carregando ? "Carregando vagas..." : (
+            <>
+              <span className="mono mr-2 text-acao">{doisDigitos(visiveis.length)}</span>
+              {visiveis.length === 1 ? "vaga encontrada" : "vagas encontradas"}
+              {filtros.q && ` para “${filtros.q}”`}
+            </>
+          )}
+        </p>
+        <div className="flex items-center gap-2">
+          <Pilula ativa={Boolean(rascunho.salvas)} conta={doisDigitos(salvas.length)} onClick={() => alternar("salvas", "1")}>
+            <Bookmark className="size-4" fill={rascunho.salvas ? "currentColor" : "none"} aria-hidden="true" /> Salvas
+          </Pilula>
+          {ativos > 0 && !carregando && (
+            <button type="button" onClick={limpar} className="link hidden min-h-11 px-2 text-[15px] sm:inline">Limpar filtros</button>
+          )}
+        </div>
+      </div>
+
+      <AvisoExemplo className="mt-2" />
 
       {erro ? (
-        <p role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{erro}</p>
+        <p role="alert" className="aviso aviso--erro mt-4">{erro}</p>
       ) : carregando ? (
-        <div className="mt-4 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3" aria-hidden="true">
+        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3" aria-hidden="true">
           {[0, 1, 2].map((i) => (
-            <div key={i} className="h-56 animate-pulse rounded-2xl border border-neutral-200 bg-white" />
+            <div key={i} className="cartao h-64 animate-pulse bg-superficie-2" />
           ))}
         </div>
-      ) : lista.length > 0 ? (
-        <div key={JSON.stringify(filtros)} className="mt-4 grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {lista.map((vaga, i) => (
-            <CartaoVaga key={vaga.id} vaga={vaga} indice={i} />
+      ) : visiveis.length > 0 ? (
+        <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {visiveis.map((vaga, i) => (
+            <CartaoVaga key={vaga.id} vaga={vaga} destaque={i === 0 && visiveis.length > 2} className={i === 0 && visiveis.length > 2 ? "md:col-span-2" : ""} />
           ))}
         </div>
       ) : (
-        <div className="anima-entra mt-4 flex flex-col items-center rounded-2xl border border-dashed border-neutral-300 bg-white px-6 py-16 text-center">
-          <SearchX className="size-8 text-neutral-400" />
-          <h2 className="mt-4 text-base font-medium text-neutral-900">
-            {todas.length ? "Nenhuma vaga encontrada" : "Nenhuma vaga aberta no momento"}
-          </h2>
-          <p className="mt-1 text-sm text-neutral-500">
-            {todas.length
-              ? "Troque a palavra, o tipo, a área ou o local para ver mais oportunidades."
-              : "Assim que uma empresa publicar uma vaga, ela aparece aqui."}
-          </p>
-          <button
-            type="button"
-            onClick={limpar}
-            className="mt-6 rounded-xl border border-neutral-300 px-5 py-2.5 text-sm font-medium text-neutral-900 transition hover:border-neutral-900"
-          >
-            Limpar filtros
-          </button>
+        <div className="cartao mt-4 flex flex-col items-start gap-5 px-6 py-10 sm:flex-row sm:items-center sm:px-8">
+          <span className="picto">{filtros.salvas ? <Bookmark className="size-5" /> : <SearchX className="size-5" />}</span>
+          <div className="flex-1">
+            <h2 className="text-2xl">
+              {filtros.salvas
+                ? "Nenhuma vaga salva ainda"
+                : !todas.length
+                  ? "Nenhuma vaga aberta no momento"
+                  : filtros.local && ativos === 1
+                    ? `Nenhuma vaga aberta em ${cidadeDe(filtros.local)} agora`
+                    : "Nenhuma vaga com esses filtros"}
+            </h2>
+            <p className="mt-2 max-w-[60ch] text-[15px] text-tinta-media">
+              {filtros.salvas
+                ? "Toque no marcador de um cartão para guardar a vaga aqui. Elas ficam salvas neste navegador."
+                : todas.length
+                  ? "Desligue um filtro ou troque a palavra. Novas vagas entram assim que as empresas publicam."
+                  : "Assim que uma empresa publicar uma vaga, ela aparece aqui."}
+            </p>
+          </div>
+          {ativos > 0 && <Botao variante="contorno" onClick={limpar}>Limpar filtros</Botao>}
+        </div>
+      )}
+
+      {ativos > 0 && !carregando && (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-linha bg-fundo px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 sm:hidden">
+          <div className="flex items-center gap-3">
+            <p className="flex-1 text-[15px] font-semibold">
+              <span className="mono text-acao">{doisDigitos(visiveis.length)}</span> {visiveis.length === 1 ? "vaga" : "vagas"} · {ativos} {ativos === 1 ? "filtro" : "filtros"}
+            </p>
+            <Botao variante="contorno" compacto onClick={limpar}>Limpar</Botao>
+            <Botao variante="lima" compacto onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>Filtros</Botao>
+          </div>
         </div>
       )}
     </main>

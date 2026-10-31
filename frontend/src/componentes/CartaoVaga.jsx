@@ -1,43 +1,66 @@
 import { Link } from "react-router-dom";
-import { ArrowUpRight, Clock, MapPin } from "lucide-react";
 
-import { COR_TIPO } from "../vagas";
+import BotaoSalvar from "./BotaoSalvar";
+import EtiquetaLocal from "./EtiquetaLocal";
+import { TARJA_TIPO, bolsaDe, ehNova, jornada, prazoDa } from "../vagas";
 
-/** Cartão de vaga. `indice` escalona a entrada quando a lista aparece. */
-export default function CartaoVaga({ vaga, indice = 0 }) {
-  const { Icone } = vaga;
+export default function CartaoVaga({ vaga, destaque = false, className = "" }) {
+  const bolsa = bolsaDe(vaga);
+  const comVT = vaga.beneficios?.some((b) => /transporte/i.test(b));
+  const prazo = prazoDa(vaga);
+  const nova = ehNova(vaga);
+
   return (
     <article
-      className="anima-entra flex flex-col rounded-2xl border border-neutral-200 bg-white p-6 transition-colors duration-200 hover:border-marca-200"
-      style={{ animationDelay: `${indice * 90}ms` }}
+      className={`cartao cartao--vivo group relative flex min-w-0 flex-col has-[a:focus-visible]:outline-2 has-[a:focus-visible]:outline-offset-3 has-[a:focus-visible]:outline-floresta ${
+        destaque ? "cartao--destaque lg:col-span-2" : ""
+      } ${className}`}
     >
-      <div className="flex items-start justify-between">
-        <span className={`grid size-10 place-items-center rounded-xl ${vaga.cor ?? "bg-neutral-100 text-neutral-600"}`}>
-          <Icone className="size-5" />
-        </span>
-        <span className={`rounded-full border px-2.5 py-0.5 text-[11px] ${COR_TIPO[vaga.tipo] ?? "border-neutral-200 text-neutral-600"}`}>
-          {vaga.tipo}
-        </span>
+      <div className="flex items-start justify-between gap-3 px-5 pt-5">
+        <div className="flex flex-wrap items-center gap-1.5 pt-1">
+          <span className={`tarja ${TARJA_TIPO[vaga.tipo] ?? "tarja--neutra"}`}>{vaga.tipo}</span>
+          {nova && <span className="tarja tarja--nova">Nova</span>}
+        </div>
+        <BotaoSalvar vaga={vaga} className="-mr-1 -mt-1" />
       </div>
 
-      <h3 className="mt-5 text-base font-semibold text-neutral-900" style={{ fontFamily: "var(--font-titulo)" }}>{vaga.titulo}</h3>
-      <p className="mt-1 text-sm text-neutral-400">{vaga.empresa}</p>
+      <div className="flex flex-1 flex-col px-5 pb-5 pt-3">
+        <h3 className={destaque ? "text-[1.625rem] sm:text-[2rem]" : "text-[1.375rem]"}>
+          <Link to={`/vagas/${vaga.id}`} className="after:absolute after:inset-0 after:rounded-cartao focus-visible:outline-none">
+            {vaga.titulo}
+          </Link>
+        </h3>
+        <p className="mt-1.5 truncate text-[15px] font-medium text-tinta-media" title={vaga.empresa}>{vaga.empresa}</p>
 
-      <ul className="mt-4 space-y-1.5 text-xs text-neutral-500">
-        <li className="flex items-center gap-2"><MapPin className="size-3.5 text-neutral-400" />{vaga.local}</li>
-        <li className="flex items-center gap-2"><Clock className="size-3.5 text-neutral-400" />{vaga.horario}</li>
-      </ul>
+        {destaque && vaga.descricao && (
+          <p className="mt-3 line-clamp-2 max-w-[60ch] text-[15px] leading-relaxed text-tinta-media">{vaga.descricao}</p>
+        )}
 
-      <div className="mt-6 flex items-center justify-between border-t border-neutral-100 pt-4">
-        <span className="text-sm font-medium text-neutral-900">
-        {vaga.valor ? `R$ ${vaga.valor.toLocaleString("pt-BR")} / mês` : "A combinar"}
-        </span>
-        <Link
-          to={`/vagas/${vaga.id}`}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-neutral-200 px-3 py-1.5 text-xs text-neutral-700 transition hover:border-marca-600 hover:text-marca-700"
-        >
-          Ver vaga <ArrowUpRight className="size-3" />
-        </Link>
+        <div className="mt-auto pt-5">
+          <p className="mono flex flex-wrap items-baseline gap-x-2 text-floresta">
+            {bolsa ? (
+              <>
+                <span className={`font-bold tracking-tight ${destaque ? "text-[1.75rem]" : "text-[1.375rem]"}`}>{bolsa}</span>
+                <span className="text-[13px] font-medium text-tinta-media">/mês{comVT && " + VT"}</span>
+              </>
+            ) : (
+              <span className="text-[1.125rem] font-bold">A combinar</span>
+            )}
+          </p>
+          {jornada(vaga).length > 0 && (
+            <p className="mono mt-1.5 text-[13px] font-medium text-tinta-media">{jornada(vaga).join(" • ")}</p>
+          )}
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between gap-3 border-t border-linha px-5 py-3">
+        <EtiquetaLocal local={vaga.local} />
+        {prazo && (
+          <span className={`dado shrink-0 ${prazo.urgente ? "font-bold text-urgente" : "text-tinta-media"}`}>
+            {prazo.urgente && <span aria-hidden="true" className="mr-1.5 inline-block size-1.5 rounded-full bg-urgente align-middle" />}
+            {prazo.texto}
+          </span>
+        )}
       </div>
     </article>
   );
