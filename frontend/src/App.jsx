@@ -20,6 +20,7 @@ import Termos from "./pages/Termos";
 import Privacidade from "./pages/Privacidade";
 import RecuperarSenha from "./pages/RecuperarSenha";
 import RedefinirSenha from "./pages/RedefinirSenha";
+import MeuPerfil from "./pages/MeuPerfil";
 
 function EmBreve({ titulo, figura }) {
   return (
@@ -68,6 +69,7 @@ export default function App() {
           <Route path="/termos" element={<Termos />} />
           <Route path="/privacidade" element={<Privacidade />} />
           <Route path="*" element={<EmBreve titulo="Página não encontrada" figura="404" />} />
+          <Route path="/meu-perfil" element={<MeuPerfil />} />
         </Routes>
       </div>
 

@@ -22,6 +22,8 @@ from app.validadores import (
     cnpj_valido,
     cpf_valido,
     email_institucional,
+    normalizar_instagram,
+    normalizar_linkedin,
     somente_digitos,
 )
 
@@ -418,6 +420,8 @@ class Candidato(BaseModel):
     curso: str
     periodo: int
     instituicao: str
+    linkedin_url: str | None = None
+    instagram_usuario: str | None = None
 
 
 class CandidaturaStatus(BaseModel):
@@ -444,6 +448,33 @@ class Estatisticas(BaseModel):
     empresas: int
     vagas_abertas: int
     candidaturas: int
+
+
+class PerfilEstudante(BaseModel):
+    id: UUID
+    nome: str
+    email_if: EmailStr
+    telefone: str | None
+    instituicao: str
+    curso: str
+    periodo: int
+    linkedin_url: str | None
+    instagram_usuario: str | None
+
+
+class PerfilAtualizar(BaseModel):
+    linkedin_url: str | None = None
+    instagram_usuario: str | None = None
+
+    @field_validator("linkedin_url")
+    @classmethod
+    def validar_linkedin(cls, valor: str | None) -> str | None:
+        return normalizar_linkedin(valor)
+
+    @field_validator("instagram_usuario")
+    @classmethod
+    def validar_instagram(cls, valor: str | None) -> str | None:
+        return normalizar_instagram(valor)
 
 
 CandidaturaResposta.model_rebuild()

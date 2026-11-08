@@ -1,6 +1,7 @@
 """Validações de domínio usadas no cadastro (UC01, passo 3)."""
 
 import re
+from urllib.parse import urlparse
 
 from config import settings
 
@@ -17,15 +18,12 @@ def cpf_valido(cpf: str) -> bool:
         return False
 
     for posicao in (9, 10):
-        soma = sum(
-            int(digitos[i]) * (posicao + 1 - i) for i in range(posicao)
-        )
+        soma = sum(int(digitos[i]) * (posicao + 1 - i) for i in range(posicao))
         verificador = (soma * 10) % 11 % 10
         if verificador != int(digitos[posicao]):
             return False
 
     return True
-
 
 
 def cnpj_valido(cnpj: str) -> bool:
@@ -48,8 +46,6 @@ def cnpj_valido(cnpj: str) -> bool:
     return True
 
 
-
-
 def email_institucional(email: str) -> bool:
     """Confere o vínculo com o IF pelo domínio do e-mail.
     Lista vazia em DOMINIOS_EMAIL_PERMITIDOS libera qualquer domínio."""
@@ -62,3 +58,67 @@ def email_institucional(email: str) -> bool:
         dominio == permitido.lower() or dominio.endswith("." + permitido.lower())
         for permitido in permitidos
     )
+
+
+def normalizar_linkedin(valor: str | None) -> str | None:
+    """Aceita o link do perfil com ou sem https://, com ou sem www e com
+    barra no fim, e devolve sempre https://www.linkedin.com/in/<perfil>.
+    Vazio vira None (remove o link). Qualquer outro endereço é recusado."""
+    valor = (valor or "").strip()
+    if not valor:
+        return None
+    if "://" not in valor:
+        valor = "https://" + valor
+    partes = urlparse(valor)
+    dominio = (partes.hostname or "").lower()
+    caminho = re.fullmatch(r"/in/([A-Za-z0-9%_-]{3,100})/?", partes.path)
+    if (
+        partes.scheme not in ("http", "https")
+        or not (dominio == "linkedin.com" or dominio.endswith(".linkedin.com"))
+        or not caminho
+    ):
+        raise ValueError("Informe o link do seu perfil, como linkedin.com/in/seu-nome.")
+    return f"https://www.linkedin.com/in/{caminho.group(1)}"
+
+
+_INSTAGRAM_RESERVADOS = {
+    "p",
+    "reel",
+    "reels",
+    "explore",
+    "stories",
+    "accounts",
+    "tv",
+    "direct",
+}
+
+
+def normalizar_instagram(valor: str | None) -> str | None:
+    """Aceita @usuario, usuario ou o link do perfil e devolve só o usuário,
+    em minúsculas e sem @. Vazio vira None (remove o usuário)."""
+    valor = (valor or "").strip()
+    if not valor:
+        return None
+
+    if valor.startswith("@"):
+        usuario = valor[1:]
+    elif "instagram.com" in valor.lower():
+        if "://" not in valor:
+            valor = "https://" + valor
+        partes = urlparse(valor)
+        dominio = (partes.hostname or "").lower()
+        if partes.scheme not in ("http", "https") or not (
+            dominio == "instagram.com" or dominio.endswith(".instagram.com")
+        ):
+            raise ValueError("Informe o seu usuário do Instagram, como @seu.usuario.")
+        segmentos = [s for s in partes.path.split("/") if s]
+        usuario = segmentos[0] if segmentos else ""
+    else:
+        usuario = valor
+
+    usuario = usuario.lower()
+    if usuario in _INSTAGRAM_RESERVADOS or not re.fullmatch(
+        r"[a-z0-9._]{1,30}", usuario
+    ):
+        raise ValueError("Informe o seu usuário do Instagram, como @seu.usuario.")
+    return usuario

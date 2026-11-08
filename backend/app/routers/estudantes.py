@@ -1,11 +1,17 @@
 """UC01 - Cadastrar Perfil de Estudante."""
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from psycopg import errors
 
 from app.db import execute, query_one
+from app.dependencias import Usuario, exigir_estudante
 from app.notificacoes import boas_vindas
-from app.schemas import EstudanteCriar, EstudanteResposta
+from app.schemas import (
+    EstudanteCriar,
+    EstudanteResposta,
+    PerfilAtualizar,
+    PerfilEstudante,
+)
 from app.seguranca import gerar_hash_senha
 
 router = APIRouter(prefix="/estudantes", tags=["Estudantes"])
@@ -78,3 +84,53 @@ async def cadastrar_estudante(dados: EstudanteCriar, tarefas: BackgroundTasks):
     # e-mail de boas-vindas em segundo plano: a tela não espera o envio
     tarefas.add_task(boas_vindas, estudante["email_if"], estudante["nome"], "estudante")
     return estudante
+
+
+# ------------------------------------------------------------------
+# Perfil do estudante logado (LinkedIn e Instagram, opcionais)
+# ------------------------------------------------------------------
+
+COLUNAS_PERFIL = """
+    id, nome, email_if, telefone, instituicao, curso, periodo,
+    linkedin_url, instagram_usuario
+"""
+
+SESSAO_EXPIRADA = HTTPException(
+    status_code=status.HTTP_401_UNAUTHORIZED,
+    detail="Sua sessão expirou. Entre novamente.",
+)
+
+
+@router.get("/me", response_model=PerfilEstudante, summary="Perfil do estudante logado")
+async def meu_perfil(estudante: Usuario = Depends(exigir_estudante)):
+    perfil = await query_one(
+        f"SELECT {COLUNAS_PERFIL} FROM estudantes WHERE id = %s", (estudante.id,)
+    )
+    if perfil is None:
+        raise SESSAO_EXPIRADA  # token de um estudante que não existe mais
+    return perfil
+
+
+@router.patch(
+    "/me",
+    response_model=PerfilEstudante,
+    summary="Atualizar o LinkedIn e o Instagram do perfil",
+)
+async def atualizar_perfil(
+    dados: PerfilAtualizar, estudante: Usuario = Depends(exigir_estudante)
+):
+    """Os dois campos são opcionais: vazio remove o link. O formato é
+    conferido e padronizado pelo schema, e de novo pelo CHECK do banco."""
+    perfil = await execute(
+        f"""
+        UPDATE estudantes
+           SET linkedin_url = %s, instagram_usuario = %s
+         WHERE id = %s
+        RETURNING {COLUNAS_PERFIL}
+        """,
+        (dados.linkedin_url, dados.instagram_usuario, estudante.id),
+        returning=True,
+    )
+    if perfil is None:
+        raise SESSAO_EXPIRADA
+    return perfil

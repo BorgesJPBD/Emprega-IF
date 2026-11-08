@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ArrowRight, ChevronDown, Lock, Mail, Phone, Plus, Users } from "lucide-react";
+import { ArrowRight, ChevronDown, ExternalLink, Lock, Mail, Phone, Plus, Users } from "lucide-react";
 
 import { get, patch } from "../api";
 import { lerSessao } from "../auth";
@@ -111,6 +111,20 @@ function Candidatos({ vagaId, aoMudar }) {
                   )}
                   <span>Inscrito em {data(c.data_inscricao)}</span>
                 </p>
+                {(c.linkedin_url || c.instagram_usuario) && (
+                  <p className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[15px]">
+                    {c.linkedin_url && (
+                      <a href={c.linkedin_url} target="_blank" rel="noopener noreferrer" className="link inline-flex items-center gap-1.5">
+                        <ExternalLink className="size-4" /> LinkedIn
+                      </a>
+                    )}
+                    {c.instagram_usuario && (
+                      <a href={`https://www.instagram.com/${c.instagram_usuario}`} target="_blank" rel="noopener noreferrer" className="link inline-flex items-center gap-1.5">
+                        <ExternalLink className="size-4" /> Instagram @{c.instagram_usuario}
+                      </a>
+                    )}
+                  </p>
+                )}
                 {desistente && (
                   <p className="mt-2 text-[15px] font-semibold text-tinta-media">Este candidato desistiu da vaga.</p>
                 )}

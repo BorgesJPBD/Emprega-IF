@@ -10,13 +10,13 @@ export default function Privacidade() {
     <PaginaTexto
       titulo="Política de privacidade"
       resumo="Como o Emprega-IF coleta, usa e protege os seus dados, conforme a Lei Geral de Proteção de Dados (Lei 13.709/2018)."
-      atualizado="19/10/2026"
+      atualizado="08/11/2026"
       secoes={[
         {
           titulo: "Quais dados coletamos",
           conteudo: (
             <>
-              <p><strong>Estudantes:</strong> nome completo, CPF, e-mail, telefone (opcional), instituição, curso e período.</p>
+              <p><strong>Estudantes:</strong> nome completo, CPF, e-mail, telefone (opcional), instituição, curso e período. Se quiser, você também pode informar o link do seu LinkedIn e o seu usuário do Instagram (opcionais).</p>
               <p><strong>Empresas:</strong> razão social, nome fantasia, CNPJ, setor de atuação, e-mail de contato, telefone e endereço (opcionais).</p>
               <p><strong>Uso da plataforma:</strong> vagas publicadas, candidaturas enviadas, data de cada candidatura e o histórico de andamento.</p>
               <p>A senha nunca é guardada: o banco armazena apenas um código irreversível gerado a partir dela (<em>hash</em> bcrypt).</p>
@@ -41,8 +41,10 @@ export default function Privacidade() {
               <p>
                 Quando você se candidata a uma vaga, a empresa que a publicou passa a ver o seu nome,
                 e-mail, telefone, instituição, curso e período, além da data e do andamento da
-                candidatura. <strong>O CPF não é mostrado às empresas.</strong> Uma empresa só vê os
-                candidatos das próprias vagas.
+                candidatura. Se você informou o LinkedIn e o Instagram no seu perfil, a empresa
+                também vê esses links. <strong>O CPF não é mostrado às empresas.</strong> Uma
+                empresa só vê os candidatos das próprias vagas, e você pode remover os links do
+                seu perfil quando quiser.
               </p>
               <p>Para funcionar, a plataforma usa serviços de terceiros, que tratam os dados apenas para isso:</p>
               <ul>

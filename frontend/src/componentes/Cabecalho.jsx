@@ -71,6 +71,11 @@ export default function Cabecalho() {
 
   const usuario = sessao?.usuario;
   const ehEmpresa = usuario?.papel === "empresa";
+  // O bloco com avatar e nome leva o estudante ao "Meu perfil"; para a empresa continua só informativo.
+  const Identidade = ehEmpresa ? "div" : Link;
+  const propsIdentidade = ehEmpresa
+    ? { title: usuario?.email }
+    : { to: "/meu-perfil", title: "Meu perfil" };
 
   function sair() {
     limparSessao();
@@ -114,7 +119,7 @@ export default function Cabecalho() {
               {ehEmpresa && (
                 <Link to="/vagas/nova" className="botao botao--lima botao--compacto">Publicar vaga</Link>
               )}
-              <div className="ml-2 flex items-center gap-2.5 border-l border-linha pl-4" title={usuario.email}>
+              <Identidade {...propsIdentidade} className="ml-2 flex items-center gap-2.5 border-l border-linha pl-4">
                 <span className="grid size-9 place-items-center rounded-full border border-[#0a3622] bg-lima font-display text-sm font-extrabold text-[#0a3622]">
                   {primeiroNome(usuario.nome).charAt(0).toUpperCase()}
                 </span>
@@ -122,7 +127,7 @@ export default function Cabecalho() {
                   <p className="max-w-40 truncate text-sm font-semibold">{ehEmpresa ? usuario.nome : primeiroNome(usuario.nome)}</p>
                   <p className="dado text-[10px] text-tinta-media">{ehEmpresa ? "Empresa" : "Estudante"}</p>
                 </div>
-              </div>
+              </Identidade>
               <button type="button" onClick={sair} className="ml-1 inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-sm font-semibold text-tinta-media transition-colors hover:bg-superficie-2 hover:text-floresta">
                 <LogOut className="size-4" /> Sair
               </button>
@@ -167,6 +172,11 @@ export default function Cabecalho() {
             {usuario && (
               <Link to={ehEmpresa ? "/painel" : "/minhas-candidaturas"} className="flex min-h-13 items-center border-b border-linha font-display text-xl font-bold tracking-tight text-floresta">
                 {ehEmpresa ? "Painel" : "Minhas candidaturas"}
+              </Link>
+            )}
+            {usuario && !ehEmpresa && (
+              <Link to="/meu-perfil" className="flex min-h-13 items-center border-b border-linha font-display text-xl font-bold tracking-tight text-floresta">
+                Meu perfil
               </Link>
             )}
             {usuario ? (
