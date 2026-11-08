@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { ErroApi, get, post } from "../api";
 import PaginaFormulario from "../componentes/PaginaFormulario";
+import InputSenha from "../componentes/InputSenha";
 
 const SETORES_PADRAO = [
   "Tecnologia da Informação",
@@ -249,9 +250,8 @@ export default function CadastroEmpresa() {
             <label className={CLASSE_ROTULO} htmlFor="senha">
               Senha
             </label>
-            <input
+            <InputSenha
               id="senha"
-              type="password"
               autoComplete="new-password"
               className={classeCampo(erros.senha)}
               placeholder="Mínimo de 8 caracteres"
@@ -265,9 +265,8 @@ export default function CadastroEmpresa() {
             <label className={CLASSE_ROTULO} htmlFor="confirmar_senha">
               Confirmar senha
             </label>
-            <input
+            <InputSenha
               id="confirmar_senha"
-              type="password"
               autoComplete="new-password"
               className={classeCampo(erros.confirmar_senha)}
               placeholder="Repita a senha"

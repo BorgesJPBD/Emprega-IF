@@ -1,3 +1,5 @@
+import InputSenha from "./InputSenha";
+
 export default function Campo({
   nome,
   rotulo,
@@ -7,6 +9,8 @@ export default function Campo({
   ...props
 }) {
   const idErro = `${nome}-erro`;
+  // Todo campo type="password" ganha o botão de mostrar/ocultar a senha.
+  const Entrada = props.type === "password" ? InputSenha : "input";
 
   return (
     <div className={inteiro ? "sm:col-span-2" : ""}>
@@ -17,7 +21,7 @@ export default function Campo({
       {children ? (
         children
       ) : (
-        <input
+        <Entrada
           id={nome}
           name={nome}
           aria-invalid={erro ? "true" : undefined}

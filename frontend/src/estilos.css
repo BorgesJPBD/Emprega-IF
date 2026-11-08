@@ -715,3 +715,7 @@
     transform: none;
   }
 }
+
+input[type="password"]::-ms-reveal {
+  display: none;
+}
