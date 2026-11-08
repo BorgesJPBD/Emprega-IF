@@ -46,7 +46,9 @@ def _formatar(linha: dict) -> dict:
     return {
         **linha,
         "tipo": TIPOS_VAGA_TELA.get(linha["tipo"], linha["tipo"]),
-        "remuneracao": float(linha["remuneracao"]) if linha["remuneracao"] is not None else None,
+        "remuneracao": (
+            float(linha["remuneracao"]) if linha["remuneracao"] is not None else None
+        ),
     }
 
 
@@ -88,9 +90,15 @@ def _escapar_like(texto: str) -> str:
     return texto.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
 
-@router.get("", response_model=list[VagaResposta], summary="Listar e buscar vagas abertas")
+@router.get(
+    "", response_model=list[VagaResposta], summary="Listar e buscar vagas abertas"
+)
 async def listar_vagas(
-    q: str | None = Query(None, max_length=100, description="Palavras para buscar no título e na descrição"),
+    q: str | None = Query(
+        None,
+        max_length=100,
+        description="Palavras para buscar no título e na descrição",
+    ),
     tipo: str | None = Query(None, description="Estágio ou Jovem aprendiz"),
     area: str | None = None,
     localizacao: str | None = None,
@@ -110,7 +118,9 @@ async def listar_vagas(
         # o começo do nome da vaga ("market", "desenv"), o título também é
         # comparado por trecho, sem diferenciar acentos nem maiúsculas.
         consulta = "websearch_to_tsquery('portuguese', sem_acento(%s))"
-        condicoes.append(f"(busca @@ {consulta} OR sem_acento(titulo) ILIKE sem_acento(%s))")
+        condicoes.append(
+            f"(busca @@ {consulta} OR sem_acento(titulo) ILIKE sem_acento(%s))"
+        )
         params.append(q.strip())
         params.append(f"%{_escapar_like(q.strip())}%")
         ordem = f"ts_rank(busca, {consulta}) DESC, {ordem}"
@@ -185,7 +195,9 @@ async def publicar_vaga(dados: VagaCriar, empresa: Usuario = Depends(exigir_empr
             if area is None:
                 raise HTTPException(
                     status_code=422,
-                    detail=[{"loc": ["body", "area"], "msg": "Selecione a área de atuação."}],
+                    detail=[
+                        {"loc": ["body", "area"], "msg": "Selecione a área de atuação."}
+                    ],
                 )
 
             await cur.execute(
@@ -202,8 +214,15 @@ async def publicar_vaga(dados: VagaCriar, empresa: Usuario = Depends(exigir_empr
                 RETURNING id
                 """,
                 {
-                    **dados.model_dump(exclude={"aceite_termos", "area", "requisitos",
-                                                "diferenciais", "beneficios"}),
+                    **dados.model_dump(
+                        exclude={
+                            "aceite_termos",
+                            "area",
+                            "requisitos",
+                            "diferenciais",
+                            "beneficios",
+                        }
+                    ),
                     "empresa_id": empresa.id,
                     "area_id": area["id"],
                 },
@@ -211,8 +230,10 @@ async def publicar_vaga(dados: VagaCriar, empresa: Usuario = Depends(exigir_empr
             vaga_id = (await cur.fetchone())["id"]
 
             # unnest ... WITH ORDINALITY numera os itens na ordem digitada
-            for tabela, itens in (("vaga_requisitos", dados.requisitos),
-                                  ("vaga_diferenciais", dados.diferenciais)):
+            for tabela, itens in (
+                ("vaga_requisitos", dados.requisitos),
+                ("vaga_diferenciais", dados.diferenciais),
+            ):
                 if itens:
                     await cur.execute(
                         f"INSERT INTO {tabela} (vaga_id, ordem, descricao) "
@@ -259,7 +280,8 @@ async def mudar_situacao(
     try:
         async with transacao() as cur:
             await cur.execute(
-                "UPDATE vagas SET situacao = %s WHERE id = %s", (dados.situacao, vaga_id)
+                "UPDATE vagas SET situacao = %s WHERE id = %s",
+                (dados.situacao, vaga_id),
             )
     except errors.RaiseException as erro:
         raise _erro_de_regra(erro)
@@ -280,7 +302,7 @@ async def listar_candidatos(vaga_id: UUID, empresa: Usuario = Depends(exigir_emp
           FROM candidaturas c
           JOIN estudantes e ON e.id = c.estudante_id
          WHERE c.vaga_id = %s
-         ORDER BY c.data_inscricao
+         ORDER BY (c.status = 'Desistente'), c.data_inscricao
         """,
         (vaga_id,),
     )

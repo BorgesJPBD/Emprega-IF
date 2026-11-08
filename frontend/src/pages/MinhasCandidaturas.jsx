@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { ArrowRight, Building2, Lock, SearchX } from "lucide-react";
 
-import { get } from "../api";
+import { get, patch } from "../api";
 import { lerSessao } from "../auth";
+import Confirmacao from "../componentes/Confirmacao";
 import PlacaTitulo from "../componentes/PlacaTitulo";
 import Trajeto from "../componentes/Trajeto";
 
@@ -30,10 +31,28 @@ export default function MinhasCandidaturas() {
 
   const [lista, setLista] = useState(null);
   const [erro, setErro] = useState("");
+  const [ocupado, setOcupado] = useState(null);
+  const [alvo, setAlvo] = useState(null); // candidatura que está sendo confirmada
 
   useEffect(() => {
     if (estudante) get("/candidaturas/minhas").then(setLista).catch((e) => setErro(e.message));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function desistir() {
+    const c = alvo;
+    if (!c) return;
+    setOcupado(c.id);
+    setErro("");
+    try {
+      const nova = await patch(`/candidaturas/${c.id}/desistir`);
+      setLista((atual) => atual.map((x) => (x.id === c.id ? nova : x)));
+    } catch (e) {
+      setErro(e.message);
+    } finally {
+      setOcupado(null);
+      setAlvo(null);
+    }
+  }
 
   if (!estudante) {
     return (
@@ -70,9 +89,11 @@ export default function MinhasCandidaturas() {
 
       <ul className="mt-6 space-y-5">
         {(lista || []).map((c) => {
+          const desistente = c.status === "Desistente";
+          const podeDesistir = c.status === "Pendente" || c.status === "Entrevista";
           const atual = Math.max(ETAPAS.findIndex((e) => e.status === c.status), 0);
           return (
-            <li key={c.id} className="cartao overflow-hidden">
+            <li key={c.id} className={`cartao overflow-hidden ${desistente ? "opacity-60" : ""}`}>
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-linha px-5 py-4 sm:px-7">
                 <div className="min-w-0">
                   <Link to={`/vagas/${c.vaga_id}`} className="text-xl font-extrabold hover:underline">{c.vaga_titulo}</Link>
@@ -85,12 +106,42 @@ export default function MinhasCandidaturas() {
                 </span>
               </div>
               <div className="px-5 py-6 sm:px-7">
-                <Trajeto paradas={paradasDe(c)} atual={atual} compacto />
+                {desistente ? (
+                  <p className="text-[15px] text-tinta-media">Você desistiu desta vaga.</p>
+                ) : (
+                  <Trajeto paradas={paradasDe(c)} atual={atual} compacto />
+                )}
+                {podeDesistir && (
+                  <button
+                    type="button"
+                    disabled={ocupado === c.id}
+                    onClick={() => setAlvo(c)}
+                    className="botao botao--perigo botao--compacto mt-5"
+                  >
+                    Desistir da candidatura
+                  </button>
+                )}
               </div>
             </li>
           );
         })}
       </ul>
+
+      <Confirmacao
+        aberto={Boolean(alvo)}
+        titulo="Desistir desta vaga?"
+        texto={
+          alvo
+            ? `Sua candidatura para “${alvo.vaga_titulo}”, da empresa ${alvo.empresa_nome}, sai do processo seletivo. Depois de desistir, você não poderá se candidatar a esta vaga de novo.`
+            : ""
+        }
+        confirmar="Sim, desistir"
+        cancelar="Voltar"
+        perigo
+        ocupado={Boolean(alvo) && ocupado === alvo.id}
+        aoConfirmar={desistir}
+        aoCancelar={() => setAlvo(null)}
+      />
     </main>
   );
 }

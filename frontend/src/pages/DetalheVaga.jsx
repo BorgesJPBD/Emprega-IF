@@ -14,10 +14,7 @@ import { TARJA_TIPO, bolsaDe, buscarParecidas, buscarVaga, cidadeDe, jornada } f
 
 const enviarCandidatura = (vagaId) => post("/candidaturas", { vaga_id: vagaId });
 
-async function vagasCandidatadas() {
-  const lista = await get("/candidaturas/minhas");
-  return lista.map((c) => c.vaga_id);
-}
+const minhasCandidaturas = () => get("/candidaturas/minhas");
 
 const DIA = 86400000;
 const paraData = (iso) => new Date(`${iso}T00:00:00`);
@@ -68,6 +65,7 @@ export default function DetalheVaga() {
   const [parecidas, setParecidas] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [candidatou, setCandidatou] = useState(false);
+  const [desistiu, setDesistiu] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [erroCandidatura, setErroCandidatura] = useState("");
   const [copiado, setCopiado] = useState(false);
@@ -77,6 +75,7 @@ export default function DetalheVaga() {
     window.scrollTo(0, 0);
     setCarregando(true);
     setCandidatou(false);
+    setDesistiu(false);
     setErroCandidatura("");
     setCopiado(false);
 
@@ -90,8 +89,13 @@ export default function DetalheVaga() {
       .catch(() => ativo && setParecidas([]));
 
     if (papel === "estudante") {
-      vagasCandidatadas()
-        .then((ids) => ativo && setCandidatou(ids.includes(id)))
+      minhasCandidaturas()
+        .then((lista) => {
+          if (!ativo) return;
+          const minha = lista.find((c) => c.vaga_id === id);
+          setCandidatou(Boolean(minha));
+          setDesistiu(minha?.status === "Desistente");
+        })
         .catch(() => {});
     }
     return () => { ativo = false; };
@@ -134,7 +138,7 @@ export default function DetalheVaga() {
 
   const { Icone } = vaga;
   const comVT = vaga.beneficios.some((b) => /transporte/i.test(b));
-  const podeCandidatar = !encerrada && !candidatou && papel !== "empresa";
+  const podeCandidatar = !encerrada && !candidatou && !desistiu && papel !== "empresa";
 
   async function candidatar() {
     setEnviando(true);
@@ -224,6 +228,11 @@ export default function DetalheVaga() {
               <button type="button" disabled className="botao botao--largo cursor-not-allowed border-linha bg-superficie-2 text-tinta-fraca">
                 Inscrições encerradas
               </button>
+            ) : desistiu ? (
+              <p role="status" className="aviso aviso--info font-normal">
+                Você desistiu desta vaga e não pode se candidatar de novo.{" "}
+                <Link to="/minhas-candidaturas" className="link">Ver minhas candidaturas</Link>
+              </p>
             ) : candidatou ? (
               <div role="status" className="aviso aviso--ok">
                 <CheckCircle2 className="mt-0.5 size-5 shrink-0 animate-[salvar-pulso_420ms_cubic-bezier(0.22,1,0.36,1)]" />

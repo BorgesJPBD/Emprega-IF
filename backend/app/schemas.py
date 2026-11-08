@@ -61,7 +61,9 @@ class EstudanteCriar(BaseModel):
     @classmethod
     def validar_vinculo(cls, valor: str) -> str:
         if not email_institucional(valor):
-            raise ValueError("Este e-mail não é aceito no cadastro. Use o e-mail do IF.")
+            raise ValueError(
+                "Este e-mail não é aceito no cadastro. Use o e-mail do IF."
+            )
         return valor.lower()
 
     @field_validator("telefone")
@@ -131,7 +133,6 @@ class LoginResposta(BaseModel):
     token_type: str
     expira_em_minutos: int
     usuario: UsuarioLogado
-
 
 
 # Setores de atuação e áreas da vaga vêm das tabelas `setores` e `areas`
@@ -204,6 +205,7 @@ class EmpresaResposta(BaseModel):
     nome_fantasia: str | None
     email_contato: EmailStr
     setor: str | None
+
 
 # ------------------------------------------------------------
 # Vagas (UC03 - Publicar Vaga)
@@ -363,6 +365,7 @@ class VagaResposta(BaseModel):
 # Candidaturas (UC02)
 # ------------------------------------------------------------
 
+
 class CandidaturaCriar(BaseModel):
     vaga_id: UUID
 
@@ -380,6 +383,7 @@ class CandidaturaResposta(BaseModel):
 class VagaSituacao(BaseModel):
     """Mudança de situação da vaga pela empresa. As transições permitidas
     são conferidas pelo trigger tg_vagas_ciclo_de_vida (migration 005)."""
+
     situacao: str
 
     @field_validator("situacao")
@@ -401,6 +405,7 @@ class PainelVaga(BaseModel):
     pendentes: int
     em_entrevista: int
     finalizadas: int
+    desistentes: int = 0
 
 
 class Candidato(BaseModel):
@@ -417,6 +422,7 @@ class Candidato(BaseModel):
 
 class CandidaturaStatus(BaseModel):
     """Andamento conferido pelo trigger tg_candidaturas_andamento."""
+
     status: str
 
     @field_validator("status")

@@ -45,7 +45,7 @@ async def minhas_vagas(empresa: Usuario = Depends(exigir_empresa)):
     linhas = await query_all(
         """
         SELECT id, titulo, tipo, situacao, data_publicacao, prazo_inscricao,
-               total_candidaturas, pendentes, em_entrevista, finalizadas
+               total_candidaturas, pendentes, em_entrevista, finalizadas, desistentes
           FROM vw_painel_vagas
          WHERE empresa_id = %s
          ORDER BY data_publicacao DESC NULLS LAST
@@ -53,7 +53,9 @@ async def minhas_vagas(empresa: Usuario = Depends(exigir_empresa)):
         (empresa.id,),
     )
     rotulo = {"Estagio": "Estágio", "Jovem Aprendiz": "Jovem aprendiz"}
-    return [{**linha, "tipo": rotulo.get(linha["tipo"], linha["tipo"])} for linha in linhas]
+    return [
+        {**linha, "tipo": rotulo.get(linha["tipo"], linha["tipo"])} for linha in linhas
+    ]
 
 
 @router.post(
@@ -103,7 +105,9 @@ async def cadastrar_empresa(dados: EmpresaCriar, tarefas: BackgroundTasks):
     if empresa is None:
         raise HTTPException(
             status_code=422,
-            detail=[{"loc": ["body", "setor"], "msg": "Selecione um setor de atuação."}],
+            detail=[
+                {"loc": ["body", "setor"], "msg": "Selecione um setor de atuação."}
+            ],
         )
     nome = empresa["nome_fantasia"] or empresa["razao_social"]
     tarefas.add_task(boas_vindas, empresa["email_contato"], nome, "empresa")

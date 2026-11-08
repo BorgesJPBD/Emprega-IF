@@ -58,7 +58,9 @@ async def candidatar(
 ):
     vaga = await query_one("SELECT situacao FROM vagas WHERE id = %s", (dados.vaga_id,))
     if vaga is None or vaga["situacao"] == "Rascunho":
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Vaga não encontrada.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Vaga não encontrada."
+        )
 
     try:
         async with transacao() as cur:
@@ -77,15 +79,20 @@ async def candidatar(
         raise SESSAO_EXPIRADA  # token de um estudante que não existe mais
     except errors.RaiseException as erro:
         # trigger tg_candidaturas_validar: vaga encerrada ou cadastro inativo
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=erro.diag.message_primary)
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail=erro.diag.message_primary
+        )
 
     candidatura = await _buscar(nova["id"])
     pessoa = await _contato(nova["id"])
     # roda depois que a resposta foi enviada: a tela não espera o e-mail
     tarefas.add_task(
         confirmar_candidatura,
-        pessoa["email_if"], pessoa["nome"], candidatura["vaga_titulo"],
-        candidatura["empresa_nome"], candidatura["data_inscricao"],
+        pessoa["email_if"],
+        pessoa["nome"],
+        candidatura["vaga_titulo"],
+        candidatura["empresa_nome"],
+        candidatura["data_inscricao"],
     )
     return candidatura
 
@@ -160,7 +167,9 @@ async def mudar_status(
         (candidatura_id,),
     )
     if dona is None or dona["empresa_id"] != empresa.id:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Candidatura não encontrada.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Candidatura não encontrada."
+        )
 
     try:
         async with transacao() as cur:
@@ -170,13 +179,49 @@ async def mudar_status(
             )
     except errors.RaiseException as erro:
         # trigger tg_candidaturas_andamento: transição não permitida
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=erro.diag.message_primary)
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail=erro.diag.message_primary
+        )
 
     candidatura = await _buscar(candidatura_id)
     pessoa = await _contato(candidatura_id)
     tarefas.add_task(
         avisar_mudanca_status,
-        pessoa["email_if"], pessoa["nome"], candidatura["vaga_titulo"],
-        candidatura["empresa_nome"], dados.status,
+        pessoa["email_if"],
+        pessoa["nome"],
+        candidatura["vaga_titulo"],
+        candidatura["empresa_nome"],
+        dados.status,
     )
     return candidatura
+
+
+@router.patch(
+    "/{candidatura_id}/desistir",
+    response_model=CandidaturaResposta,
+    summary="Desistir da candidatura (estudante dono)",
+)
+async def desistir(
+    candidatura_id: UUID, estudante: Usuario = Depends(exigir_estudante)
+):
+    dona = await query_one(
+        "SELECT estudante_id FROM candidaturas WHERE id = %s", (candidatura_id,)
+    )
+    if dona is None or dona["estudante_id"] != estudante.id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Candidatura não encontrada."
+        )
+
+    try:
+        async with transacao() as cur:
+            await cur.execute(
+                "UPDATE candidaturas SET status = 'Desistente' WHERE id = %s",
+                (candidatura_id,),
+            )
+    except errors.RaiseException as erro:
+        # trigger tg_candidaturas_andamento: já finalizada, por exemplo
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail=erro.diag.message_primary
+        )
+
+    return await _buscar(candidatura_id)

@@ -4,6 +4,7 @@ import { ArrowRight, ChevronDown, Lock, Mail, Phone, Plus, Users } from "lucide-
 
 import { get, patch } from "../api";
 import { lerSessao } from "../auth";
+import Confirmacao from "../componentes/Confirmacao";
 import PlacaTitulo from "../componentes/PlacaTitulo";
 
 const SITUACAO = {
@@ -23,6 +24,7 @@ const STATUS = {
   Pendente: "tarja--neutra",
   Entrevista: "tarja--aprendiz",
   Finalizado: "tarja--estagio",
+  Desistente: "tarja--neutra",
 };
 
 const ACOES_CANDIDATURA = {
@@ -76,42 +78,54 @@ function Candidatos({ vagaId, aoMudar }) {
   if (!lista) return <p className="border-t border-linha px-5 py-5 text-[15px] font-bold sm:px-7">Carregando candidatos...</p>;
   if (!lista.length) return <p className="border-t border-linha bg-superficie-2 px-5 py-5 text-[15px] sm:px-7">Ninguém se candidatou ainda.</p>;
 
+  // Quem continua no processo fica em cima; quem desistiu vai para o fim.
+  const ordenada = [...lista].sort((a, b) => (a.status === "Desistente") - (b.status === "Desistente"));
+
   return (
     <div className="border-t border-linha bg-superficie-2 px-5 sm:px-7">
       {erro && <p role="alert" className="aviso aviso--erro mt-4">{erro}</p>}
       <ul className="divide-y divide-linha">
-        {lista.map((c) => (
-          <li key={c.candidatura_id} className="flex flex-wrap items-start justify-between gap-4 py-4">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="text-lg font-extrabold">{c.nome}</p>
-                <Selo classe={STATUS[c.status]}>{c.status}</Selo>
-              </div>
-              <p className="mt-0.5 text-[15px] text-tinta-media">
-                {c.curso} · {c.periodo}º período · {c.instituicao}
-              </p>
-              <p className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[15px] text-tinta">
-                <a href={`mailto:${c.email_if}`} className="link inline-flex items-center gap-1.5">
-                  <Mail className="size-4" /> {c.email_if}
-                </a>
-                {c.telefone && (
-                  <span className="inline-flex items-center gap-1.5">
-                    <Phone className="size-4 text-acao" /> {telefone(c.telefone)}
-                  </span>
+        {ordenada.map((c) => {
+          const desistente = c.status === "Desistente";
+          return (
+            <li
+              key={c.candidatura_id}
+              className={`flex flex-wrap items-start justify-between gap-4 py-4 ${desistente ? "opacity-50" : ""}`}
+            >
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-lg font-extrabold">{c.nome}</p>
+                  <Selo classe={STATUS[c.status] ?? "tarja--neutra"}>{c.status}</Selo>
+                </div>
+                <p className="mt-0.5 text-[15px] text-tinta-media">
+                  {c.curso} · {c.periodo}º período · {c.instituicao}
+                </p>
+                <p className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[15px] text-tinta">
+                  <a href={`mailto:${c.email_if}`} className="link inline-flex items-center gap-1.5">
+                    <Mail className="size-4" /> {c.email_if}
+                  </a>
+                  {c.telefone && (
+                    <span className="inline-flex items-center gap-1.5">
+                      <Phone className="size-4 text-acao" /> {telefone(c.telefone)}
+                    </span>
+                  )}
+                  <span>Inscrito em {data(c.data_inscricao)}</span>
+                </p>
+                {desistente && (
+                  <p className="mt-2 text-[15px] font-semibold text-tinta-media">Este candidato desistiu da vaga.</p>
                 )}
-                <span>Inscrito em {data(c.data_inscricao)}</span>
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {(ACOES_CANDIDATURA[c.status] || []).map(([status, rotulo]) => (
-                <button key={status} type="button" disabled={ocupado === c.candidatura_id}
-                  onClick={() => mudar(c.candidatura_id, status)} className="botao botao--contorno botao--compacto">
-                  {rotulo}
-                </button>
-              ))}
-            </div>
-          </li>
-        ))}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {(ACOES_CANDIDATURA[c.status] || []).map(([status, rotulo]) => (
+                  <button key={status} type="button" disabled={ocupado === c.candidatura_id}
+                    onClick={() => mudar(c.candidatura_id, status)} className="botao botao--contorno botao--compacto">
+                    {rotulo}
+                  </button>
+                ))}
+              </div>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
@@ -126,6 +140,7 @@ export default function PainelEmpresa() {
   const [erro, setErro] = useState("");
   const [aberta, setAberta] = useState(null);
   const [ocupado, setOcupado] = useState(null);
+  const [cancelando, setCancelando] = useState(null); // vaga aguardando confirmação
 
   const carregar = () =>
     get("/empresas/me/vagas")
@@ -137,7 +152,6 @@ export default function PainelEmpresa() {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function mudarSituacao(vagaId, situacao) {
-    if (situacao === "Cancelada" && !window.confirm("Cancelar esta vaga? Ela sai da lista e não pode ser reaberta.")) return;
     setOcupado(vagaId);
     setErro("");
     try {
@@ -147,8 +161,13 @@ export default function PainelEmpresa() {
       setErro(e.message);
     } finally {
       setOcupado(null);
+      setCancelando(null);
     }
   }
+
+  // Cancelar é irreversível e pede confirmação; as outras mudanças são diretas.
+  const pedirMudanca = (vaga, situacao) =>
+    situacao === "Cancelada" ? setCancelando(vaga) : mudarSituacao(vaga.id, situacao);
 
   if (!empresa) {
     return (
@@ -180,7 +199,7 @@ export default function PainelEmpresa() {
       <dl className="cartao mt-4 grid grid-cols-2 divide-linha lg:grid-cols-4 lg:divide-x [&>*:nth-child(-n+2)]:border-b [&>*:nth-child(-n+2)]:border-linha lg:[&>*:nth-child(-n+2)]:border-b-0 [&>*:nth-child(odd)]:border-r [&>*:nth-child(odd)]:border-linha lg:[&>*:nth-child(odd)]:border-r-0">
         <Resumo rotulo="Vagas publicadas" valor={vagas ? vagas.length : "—"} />
         <Resumo rotulo="Com inscrições abertas" valor={vagas ? vagas.filter((v) => v.situacao === "Ativa").length : "—"} />
-        <Resumo rotulo="Candidaturas recebidas" valor={vagas ? total("total_candidaturas") : "—"} />
+        <Resumo rotulo="Candidaturas em andamento" valor={vagas ? total("total_candidaturas") : "—"} />
         <Resumo rotulo="Aguardando resposta" valor={vagas ? total("pendentes") : "—"} />
       </dl>
 
@@ -214,16 +233,19 @@ export default function PainelEmpresa() {
                     {v.tipo} · publicada em {data(v.data_publicacao)} · inscrições até {data(v.prazo_inscricao)}
                   </p>
                   <p className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-[15px]">
-                    <span className="inline-flex items-center gap-1.5 font-bold"><Users className="size-4 text-acao" /> {v.total_candidaturas} candidatura(s)</span>
+                    <span className="inline-flex items-center gap-1.5 font-bold"><Users className="size-4 text-acao" /> {v.total_candidaturas} em andamento</span>
                     <span>{v.pendentes} pendente(s)</span>
                     <span>{v.em_entrevista} em entrevista</span>
                     <span>{v.finalizadas} finalizada(s)</span>
+                    {v.desistentes > 0 && (
+                      <span className="text-tinta-media">{v.desistentes} desistiu(ram)</span>
+                    )}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   {(ACOES_VAGA[v.situacao] || []).map(([situacao, rotulo]) => (
                     <button key={situacao} type="button" disabled={ocupado === v.id}
-                      onClick={() => mudarSituacao(v.id, situacao)} className={classeAcao(situacao)}>
+                      onClick={() => pedirMudanca(v, situacao)} className={classeAcao(situacao)}>
                       {rotulo}
                     </button>
                   ))}
@@ -243,6 +265,22 @@ export default function PainelEmpresa() {
           );
         })}
       </ul>
+
+      <Confirmacao
+        aberto={Boolean(cancelando)}
+        titulo="Cancelar esta vaga?"
+        texto={
+          cancelando
+            ? `A vaga “${cancelando.titulo}” sai da lista de vagas abertas e não pode ser reaberta depois.`
+            : ""
+        }
+        confirmar="Sim, cancelar vaga"
+        cancelar="Voltar"
+        perigo
+        ocupado={Boolean(cancelando) && ocupado === cancelando.id}
+        aoConfirmar={() => mudarSituacao(cancelando.id, "Cancelada")}
+        aoCancelar={() => setCancelando(null)}
+      />
     </main>
   );
 }
