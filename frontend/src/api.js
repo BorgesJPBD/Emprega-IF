@@ -61,6 +61,8 @@ async function requisitar(metodo, rota, dados) {
 
 export const post = (rota, dados) => requisitar("POST", rota, dados);
 export const patch = (rota, dados) => requisitar("PATCH", rota, dados);
+export const put = (rota, dados) => requisitar("PUT", rota, dados);
+export const del = (rota) => requisitar("DELETE", rota);
 
 export function get(rota, filtros = {}) {
   const busca = new URLSearchParams(

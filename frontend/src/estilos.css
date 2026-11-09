@@ -719,3 +719,15 @@
 input[type="password"]::-ms-reveal {
   display: none;
 }
+
+@media print {
+  body { background: #fff !important; }
+  .nao-imprimir, #root header, #root footer { display: none !important; }
+  .curriculo-layout { display: block !important; }
+  .curriculo-folha {
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    max-width: none !important;
+  }
+}

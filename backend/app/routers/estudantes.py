@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from psycopg import errors
+from psycopg.types.json import Jsonb
 
 from app.db import execute, query_one
 from app.dependencias import Usuario, exigir_estudante
@@ -12,6 +13,7 @@ from app.schemas import (
     PerfilAtualizar,
     PerfilEstudante,
 )
+from app.schemas_curriculo import CurriculoDados, CurriculoResposta
 from app.seguranca import gerar_hash_senha
 
 router = APIRouter(prefix="/estudantes", tags=["Estudantes"])
@@ -134,3 +136,58 @@ async def atualizar_perfil(
     if perfil is None:
         raise SESSAO_EXPIRADA
     return perfil
+
+
+# ------------------------------------------------------------------
+# Currículo do estudante logado (opcional, modelo da plataforma)
+#
+# Guardado como dados (JSON), uma linha por estudante. O estudante
+# cria, edita e apaga quando quiser; se a conta for excluída, o
+# ON DELETE CASCADE da tabela leva o currículo junto.
+# ------------------------------------------------------------------
+
+
+@router.get(
+    "/me/curriculo",
+    response_model=CurriculoResposta | None,
+    summary="Currículo do estudante logado (null se ainda não criou)",
+)
+async def meu_curriculo(estudante: Usuario = Depends(exigir_estudante)):
+    return await query_one(
+        "SELECT dados, atualizado_em FROM curriculos WHERE estudante_id = %s",
+        (estudante.id,),
+    )
+
+
+@router.put(
+    "/me/curriculo",
+    response_model=CurriculoResposta,
+    summary="Criar ou atualizar o currículo",
+)
+async def salvar_curriculo(
+    dados: CurriculoDados, estudante: Usuario = Depends(exigir_estudante)
+):
+    try:
+        curriculo = await execute(
+            """
+            INSERT INTO curriculos (estudante_id, dados)
+            VALUES (%s, %s)
+            ON CONFLICT (estudante_id)
+            DO UPDATE SET dados = EXCLUDED.dados, atualizado_em = now()
+            RETURNING dados, atualizado_em
+            """,
+            (estudante.id, Jsonb(dados.model_dump())),
+            returning=True,
+        )
+    except errors.ForeignKeyViolation:
+        raise SESSAO_EXPIRADA  # token de um estudante que não existe mais
+    return curriculo
+
+
+@router.delete(
+    "/me/curriculo",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Apagar o currículo",
+)
+async def apagar_curriculo(estudante: Usuario = Depends(exigir_estudante)):
+    await execute("DELETE FROM curriculos WHERE estudante_id = %s", (estudante.id,))

@@ -152,6 +152,19 @@ export default function MeuPerfil() {
           </button>
         </form>
       </div>
+
+      <section className="cartao mt-4 flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:p-7">
+        <div className="flex-1">
+          <h2 className="text-2xl">Meu currículo</h2>
+          <p className="mt-2 max-w-[60ch] text-[15px] leading-relaxed text-tinta-media">
+            Opcional. Monte um currículo no modelo da plataforma, rapidinho: as empresas das vagas em que
+            você se candidatar poderão ver. Você pode editar ou apagar quando quiser.
+          </p>
+        </div>
+        <Link to="/meu-curriculo" className="botao">
+          Criar ou editar currículo <ArrowRight className="seta size-5" />
+        </Link>
+      </section>
     </main>
   );
 }
