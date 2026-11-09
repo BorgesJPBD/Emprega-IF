@@ -27,17 +27,28 @@ FUSO = ZoneInfo("America/Campo_Grande")
 VERDE = "#2f9e41"
 
 
-async def enviar_email(para_email: str, para_nome: str, assunto: str, html: str, texto: str) -> bool:
+async def enviar_email(
+    para_email: str, para_nome: str, assunto: str, html: str, texto: str
+) -> bool:
     if not settings.BREVO_API_KEY or not settings.EMAIL_REMETENTE:
-        log.info("E-mail não enviado (BREVO_API_KEY/EMAIL_REMETENTE não configurados): %s", assunto)
+        log.info(
+            "E-mail não enviado (BREVO_API_KEY/EMAIL_REMETENTE não configurados): %s",
+            assunto,
+        )
         return False
     try:
         async with httpx.AsyncClient(timeout=10) as cliente:
             resposta = await cliente.post(
                 URL_BREVO,
-                headers={"api-key": settings.BREVO_API_KEY, "accept": "application/json"},
+                headers={
+                    "api-key": settings.BREVO_API_KEY,
+                    "accept": "application/json",
+                },
                 json={
-                    "sender": {"email": settings.EMAIL_REMETENTE, "name": settings.EMAIL_REMETENTE_NOME},
+                    "sender": {
+                        "email": settings.EMAIL_REMETENTE,
+                        "name": settings.EMAIL_REMETENTE_NOME,
+                    },
                     "to": [{"email": para_email, "name": para_nome}],
                     "subject": assunto,
                     "htmlContent": html,
@@ -45,7 +56,11 @@ async def enviar_email(para_email: str, para_nome: str, assunto: str, html: str,
                 },
             )
         if resposta.status_code >= 300:
-            log.warning("Brevo recusou o e-mail (%s): %s", resposta.status_code, resposta.text[:300])
+            log.warning(
+                "Brevo recusou o e-mail (%s): %s",
+                resposta.status_code,
+                resposta.text[:300],
+            )
             return False
         return True
     except httpx.HTTPError as erro:
@@ -53,7 +68,9 @@ async def enviar_email(para_email: str, para_nome: str, assunto: str, html: str,
         return False
 
 
-def _modelo(titulo: str, paragrafos: list[str], botao_texto: str, botao_link: str) -> str:
+def _modelo(
+    titulo: str, paragrafos: list[str], botao_texto: str, botao_link: str
+) -> str:
     """HTML simples e com estilos inline: é o que os leitores de e-mail
     (Gmail, Outlook) exibem de forma confiável."""
     corpo = "".join(
@@ -81,7 +98,9 @@ def _modelo(titulo: str, paragrafos: list[str], botao_texto: str, botao_link: st
 </body></html>"""
 
 
-async def confirmar_candidatura(email: str, nome: str, vaga: str, empresa: str, quando: datetime) -> None:
+async def confirmar_candidatura(
+    email: str, nome: str, vaga: str, empresa: str, quando: datetime
+) -> None:
     primeiro_nome = escape(nome.split()[0])
     data = quando.astimezone(FUSO).strftime("%d/%m/%Y às %H:%M")
     link = f"{settings.SITE_URL}/minhas-candidaturas"
@@ -121,13 +140,20 @@ MENSAGENS_STATUS = {
 }
 
 
-async def avisar_mudanca_status(email: str, nome: str, vaga: str, empresa: str, status: str) -> None:
+async def avisar_mudanca_status(
+    email: str, nome: str, vaga: str, empresa: str, status: str
+) -> None:
     if status not in MENSAGENS_STATUS:
         return
     titulo, modelo = MENSAGENS_STATUS[status]
     paragrafo = modelo.format(vaga=escape(vaga), empresa=escape(empresa))
     link = f"{settings.SITE_URL}/minhas-candidaturas"
-    html = _modelo(titulo, [f"Olá, {escape(nome.split()[0])}!", paragrafo], "Ver minhas candidaturas", link)
+    html = _modelo(
+        titulo,
+        [f"Olá, {escape(nome.split()[0])}!", paragrafo],
+        "Ver minhas candidaturas",
+        link,
+    )
     texto = (
         f"Olá, {nome.split()[0]}!\n\n"
         + paragrafo.replace("<strong>", "").replace("</strong>", "")
@@ -157,9 +183,13 @@ async def boas_vindas(email: str, nome: str, papel: str) -> None:
         nome_texto = nome.split()[0]
     html = _modelo(
         "Cadastro concluído",
-        [saudacao, texto_principal,
-         f"Para entrar, use o e-mail <strong>{escape(email)}</strong> e a senha que você criou."],
-        botao, link,
+        [
+            saudacao,
+            texto_principal,
+            f"Para entrar, use o e-mail <strong>{escape(email)}</strong> e a senha que você criou.",
+        ],
+        botao,
+        link,
     )
     texto = (
         f"Olá, {nome_texto}!\n\n{texto_principal}\n\nPara entrar, use o e-mail {email} "
@@ -189,6 +219,31 @@ async def link_redefinir_senha(email: str, nome: str, link: str) -> None:
         "ignore este e-mail.\n\nEmprega-IF · Projeto de extensão do IFMS"
     )
     await enviar_email(email, nome, "Criar uma nova senha no Emprega-IF", html, texto)
+
+
+async def conta_excluida(email: str, nome: str) -> None:
+    """Aviso de que a conta foi excluída. Serve também de alerta: se a
+    pessoa não fez isso, sabe que precisa falar com a equipe."""
+    primeiro_nome = nome.split()[0]
+    html = _modelo(
+        "Sua conta foi excluída",
+        [
+            f"Olá, {escape(primeiro_nome)}!",
+            "Sua conta no Emprega-IF foi excluída, junto com as suas candidaturas, o histórico "
+            "delas, o seu currículo e os seus links.",
+            "Se foi você que pediu, não precisa fazer mais nada. Se não foi, fale com a equipe "
+            "do projeto o quanto antes. Você pode criar uma nova conta quando quiser.",
+        ],
+        "Ir para o Emprega-IF",
+        settings.SITE_URL,
+    )
+    texto = (
+        f"Olá, {primeiro_nome}!\n\nSua conta no Emprega-IF foi excluída, junto com as suas "
+        "candidaturas, o histórico delas, o seu currículo e os seus links.\n\n"
+        "Se foi você que pediu, não precisa fazer mais nada. Se não foi, fale com a equipe do "
+        f"projeto o quanto antes.\n\n{settings.SITE_URL}\n\nEmprega-IF · Projeto de extensão do IFMS"
+    )
+    await enviar_email(email, nome, "Sua conta no Emprega-IF foi excluída", html, texto)
 
 
 def email_configurado() -> bool:

@@ -3,10 +3,11 @@
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from psycopg import errors
 from psycopg.types.json import Jsonb
+from pydantic import BaseModel, Field
 
-from app.db import execute, query_one
+from app.db import execute, query_one, transacao
 from app.dependencias import Usuario, exigir_estudante
-from app.notificacoes import boas_vindas
+from app.notificacoes import boas_vindas, conta_excluida
 from app.schemas import (
     EstudanteCriar,
     EstudanteResposta,
@@ -14,7 +15,7 @@ from app.schemas import (
     PerfilEstudante,
 )
 from app.schemas_curriculo import CurriculoDados, CurriculoResposta
-from app.seguranca import gerar_hash_senha
+from app.seguranca import gerar_hash_senha, senha_confere
 
 router = APIRouter(prefix="/estudantes", tags=["Estudantes"])
 
@@ -191,3 +192,47 @@ async def salvar_curriculo(
 )
 async def apagar_curriculo(estudante: Usuario = Depends(exigir_estudante)):
     await execute("DELETE FROM curriculos WHERE estudante_id = %s", (estudante.id,))
+
+
+# ------------------------------------------------------------------
+# Excluir a própria conta (LGPD, art. 18, VI)
+#
+# Só o estudante logado, e só confirmando a senha. Não precisa apagar
+# nada à mão: as chaves estrangeiras têm ON DELETE CASCADE e levam
+# junto as candidaturas, o histórico delas, o currículo e os pedidos
+# de redefinição de senha.
+# ------------------------------------------------------------------
+
+
+class ExcluirContaEntrada(BaseModel):
+    senha: str = Field(min_length=1, max_length=72)
+
+
+@router.post(
+    "/me/excluir",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Excluir a própria conta (pede a senha)",
+)
+async def excluir_conta(
+    dados: ExcluirContaEntrada,
+    tarefas: BackgroundTasks,
+    estudante: Usuario = Depends(exigir_estudante),
+):
+    async with transacao() as cur:
+        await cur.execute(
+            "SELECT nome, email_if, senha_hash FROM estudantes WHERE id = %s FOR UPDATE",
+            (estudante.id,),
+        )
+        conta = await cur.fetchone()
+        if conta is None:
+            raise SESSAO_EXPIRADA
+        if not senha_confere(dados.senha, conta["senha_hash"]):
+            # 403 e não 401: o front derruba a sessão em 401, e aqui a
+            # pessoa só errou a senha.
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="Senha incorreta."
+            )
+        await cur.execute("DELETE FROM estudantes WHERE id = %s", (estudante.id,))
+
+    # aviso por e-mail em segundo plano, só depois de a conta ter sido apagada
+    tarefas.add_task(conta_excluida, conta["email_if"], conta["nome"])

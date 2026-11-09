@@ -84,10 +84,13 @@ export default function Privacidade() {
           titulo: "Por quanto tempo guardamos",
           conteudo: (
             <p>
-              Enquanto a sua conta existir. Ao excluir a conta de um estudante, as candidaturas dele,
-              o histórico delas e o currículo são excluídos junto. O currículo é guardado como texto
-              no banco de dados, e você pode editá-lo ou apagá-lo a qualquer momento em “Meu perfil”.
-              O PDF do currículo é gerado no seu navegador e não fica guardado na plataforma.
+              Enquanto a sua conta existir. O estudante pode excluir a própria conta a qualquer
+              momento em “Meu perfil”: os dados de cadastro, as candidaturas, o histórico delas, o
+              currículo e os links são apagados junto, e não dá para desfazer. O currículo é guardado
+              como texto no banco de dados, e você pode editá-lo ou apagá-lo quando quiser. O PDF do
+              currículo é gerado no seu navegador e não fica guardado na plataforma. O provedor do
+              banco de dados pode manter cópias de segurança por um curto período, até que elas sejam
+              eliminadas automaticamente.
             </p>
           ),
         },
@@ -98,9 +101,10 @@ export default function Privacidade() {
               <p>
                 Pela LGPD (art. 18), você pode pedir a confirmação de que tratamos seus dados, o acesso a
                 eles, a correção de dados errados e a exclusão da sua conta e dos seus dados. Os
-                links, o currículo e os dados do perfil você mesmo edita ou apaga no site.
+                estudantes podem excluir a própria conta e apagar o currículo e os links diretamente no
+                site, em “Meu perfil”.
               </p>
-              <p>Para isso, fale com {contato}.</p>
+              <p>Para os outros pedidos, e para contas de empresa, fale com {contato}.</p>
             </>
           ),
         },

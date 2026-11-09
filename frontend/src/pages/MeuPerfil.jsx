@@ -5,6 +5,7 @@ import { ArrowRight, Lock } from "lucide-react";
 import { ErroApi, get, patch } from "../api";
 import { lerSessao } from "../auth";
 import Campo from "../componentes/Campo";
+import ExcluirConta from "../componentes/ExcluirConta";
 import PlacaTitulo from "../componentes/PlacaTitulo";
 
 const VAZIO = { linkedin_url: "", instagram_usuario: "" };
@@ -165,6 +166,8 @@ export default function MeuPerfil() {
           Criar ou editar currículo <ArrowRight className="seta size-5" />
         </Link>
       </section>
+
+      <ExcluirConta />
     </main>
   );
 }
