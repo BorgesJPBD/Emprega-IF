@@ -22,6 +22,7 @@ import RecuperarSenha from "./pages/RecuperarSenha";
 import RedefinirSenha from "./pages/RedefinirSenha";
 import MeuPerfil from "./pages/MeuPerfil";
 import MeuCurriculo from "./pages/MeuCurriculo";
+import CurriculoCandidato from "./pages/CurriculoCandidato";
 
 
 function EmBreve({ titulo, figura }) {
@@ -73,6 +74,7 @@ export default function App() {
           <Route path="*" element={<EmBreve titulo="Página não encontrada" figura="404" />} />
           <Route path="/meu-perfil" element={<MeuPerfil />} />
           <Route path="/meu-curriculo" element={<MeuCurriculo />} />
+          <Route path="/painel/candidaturas/:id/curriculo" element={<CurriculoCandidato />} />
         </Routes>
       </div>
 

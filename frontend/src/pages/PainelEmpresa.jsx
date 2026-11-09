@@ -120,7 +120,7 @@ function Candidatos({ vagaId, aoMudar }) {
                     )}
                     {c.instagram_usuario && (
                       <a href={`https://www.instagram.com/${c.instagram_usuario}`} target="_blank" rel="noopener noreferrer" className="link inline-flex items-center gap-1.5">
-                        <ExternalLink className="size-4" /> Instagram @{c.instagram_usuario}
+                        <ExternalLink className="size-4" /> Instagram
                       </a>
                     )}
                   </p>
@@ -130,6 +130,11 @@ function Candidatos({ vagaId, aoMudar }) {
                 )}
               </div>
               <div className="flex flex-wrap gap-2">
+                {c.tem_curriculo && (
+                  <Link to={`/painel/candidaturas/${c.candidatura_id}/curriculo`} className="botao botao--compacto">
+                    Ver currículo
+                  </Link>
+                )}
                 {(ACOES_CANDIDATURA[c.status] || []).map(([status, rotulo]) => (
                   <button key={status} type="button" disabled={ocupado === c.candidatura_id}
                     onClick={() => mudar(c.candidatura_id, status)} className="botao botao--contorno botao--compacto">

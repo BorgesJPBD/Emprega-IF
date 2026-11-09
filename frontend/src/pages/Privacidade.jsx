@@ -16,7 +16,7 @@ export default function Privacidade() {
           titulo: "Quais dados coletamos",
           conteudo: (
             <>
-              <p><strong>Estudantes:</strong> nome completo, CPF, e-mail, telefone (opcional), instituição, curso e período. Se quiser, você também pode informar o link do seu LinkedIn e o seu usuário do Instagram (opcionais).</p>
+              <p><strong>Estudantes:</strong> nome completo, CPF, e-mail, telefone (opcional), instituição, curso e período. Se quiser, você também pode informar o link do seu LinkedIn e o seu usuário do Instagram, e montar um currículo na plataforma (objetivo, formação, experiências e projetos, cursos, habilidades e idiomas). Tudo isso é opcional, e o currículo não tem campo para foto, CPF, RG nem endereço completo.</p>
               <p><strong>Empresas:</strong> razão social, nome fantasia, CNPJ, setor de atuação, e-mail de contato, telefone e endereço (opcionais).</p>
               <p><strong>Uso da plataforma:</strong> vagas publicadas, candidaturas enviadas, data de cada candidatura e o histórico de andamento.</p>
               <p>A senha nunca é guardada: o banco armazena apenas um código irreversível gerado a partir dela (<em>hash</em> bcrypt).</p>
@@ -29,6 +29,7 @@ export default function Privacidade() {
             <ul>
               <li>Criar e manter a sua conta e permitir o login.</li>
               <li>Exibir vagas e registrar candidaturas.</li>
+              <li>Mostrar às empresas das vagas em que você se candidatou o seu currículo e os seus links, se você os criou.</li>
               <li>Enviar e-mails sobre a sua conta e as suas candidaturas (confirmação e mudanças de andamento).</li>
               <li>Mostrar números gerais da plataforma, sempre em totais, sem identificar ninguém.</li>
             </ul>
@@ -41,10 +42,11 @@ export default function Privacidade() {
               <p>
                 Quando você se candidata a uma vaga, a empresa que a publicou passa a ver o seu nome,
                 e-mail, telefone, instituição, curso e período, além da data e do andamento da
-                candidatura. Se você informou o LinkedIn e o Instagram no seu perfil, a empresa
-                também vê esses links. <strong>O CPF não é mostrado às empresas.</strong> Uma
-                empresa só vê os candidatos das próprias vagas, e você pode remover os links do
-                seu perfil quando quiser.
+                candidatura. Se você informou o LinkedIn e o Instagram no seu perfil, ou criou um
+                currículo, a empresa também vê esses links e o currículo. Se você desistir da vaga,
+                ela deixa de ver os dois. <strong>O CPF não é mostrado às empresas.</strong> Uma
+                empresa só vê os candidatos das próprias vagas, e você pode remover os links e
+                apagar o currículo quando quiser.
               </p>
               <p>Para funcionar, a plataforma usa serviços de terceiros, que tratam os dados apenas para isso:</p>
               <ul>
@@ -82,8 +84,10 @@ export default function Privacidade() {
           titulo: "Por quanto tempo guardamos",
           conteudo: (
             <p>
-              Enquanto a sua conta existir. Ao excluir a conta de um estudante, as candidaturas dele e o
-              histórico delas são excluídos junto.
+              Enquanto a sua conta existir. Ao excluir a conta de um estudante, as candidaturas dele,
+              o histórico delas e o currículo são excluídos junto. O currículo é guardado como texto
+              no banco de dados, e você pode editá-lo ou apagá-lo a qualquer momento em “Meu perfil”.
+              O PDF do currículo é gerado no seu navegador e não fica guardado na plataforma.
             </p>
           ),
         },
@@ -93,7 +97,8 @@ export default function Privacidade() {
             <>
               <p>
                 Pela LGPD (art. 18), você pode pedir a confirmação de que tratamos seus dados, o acesso a
-                eles, a correção de dados errados e a exclusão da sua conta e dos seus dados.
+                eles, a correção de dados errados e a exclusão da sua conta e dos seus dados. Os
+                links, o currículo e os dados do perfil você mesmo edita ou apaga no site.
               </p>
               <p>Para isso, fale com {contato}.</p>
             </>

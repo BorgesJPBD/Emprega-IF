@@ -100,3 +100,17 @@ class CurriculoDados(_Base):
 class CurriculoResposta(BaseModel):
     dados: CurriculoDados
     atualizado_em: datetime
+
+
+class CurriculoCandidato(BaseModel):
+    """O que a empresa recebe ao abrir o currículo de um candidato: o
+    contato que já aparece no painel, as redes e o currículo em si.
+    Sem CPF, como em todo o resto da plataforma."""
+
+    nome: str
+    email_if: str
+    telefone: str | None
+    linkedin_url: str | None
+    instagram_usuario: str | None
+    dados: CurriculoDados
+    atualizado_em: datetime

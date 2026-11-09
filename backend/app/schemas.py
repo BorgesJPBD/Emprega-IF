@@ -422,6 +422,7 @@ class Candidato(BaseModel):
     instituicao: str
     linkedin_url: str | None = None
     instagram_usuario: str | None = None
+    tem_curriculo: bool = False
 
 
 class CandidaturaStatus(BaseModel):

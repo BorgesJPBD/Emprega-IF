@@ -300,7 +300,9 @@ async def listar_candidatos(vaga_id: UUID, empresa: Usuario = Depends(exigir_emp
         SELECT c.id AS candidatura_id, c.status, c.data_inscricao,
           e.nome, e.email_if, e.telefone, e.curso, e.periodo, e.instituicao,
           CASE WHEN c.status <> 'Desistente' THEN e.linkedin_url END AS linkedin_url,
-          CASE WHEN c.status <> 'Desistente' THEN e.instagram_usuario END AS instagram_usuario
+          CASE WHEN c.status <> 'Desistente' THEN e.instagram_usuario END AS instagram_usuario,
+          (c.status <> 'Desistente'
+           AND EXISTS (SELECT 1 FROM curriculos cu WHERE cu.estudante_id = e.id)) AS tem_curriculo
             FROM candidaturas c
             JOIN estudantes e ON e.id = c.estudante_id
             WHERE c.vaga_id = %s

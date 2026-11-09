@@ -19,6 +19,7 @@ from app.db import query_all, query_one, transacao
 from app.dependencias import Usuario, exigir_empresa, exigir_estudante
 from app.notificacoes import avisar_mudanca_status, confirmar_candidatura
 from app.schemas import CandidaturaCriar, CandidaturaResposta, CandidaturaStatus
+from app.schemas_curriculo import CurriculoCandidato
 
 router = APIRouter(prefix="/candidaturas", tags=["Candidaturas"])
 
@@ -225,3 +226,32 @@ async def desistir(
         )
 
     return await _buscar(candidatura_id)
+
+
+@router.get(
+    "/{candidatura_id}/curriculo",
+    response_model=CurriculoCandidato,
+    summary="Currículo do candidato (empresa dona da vaga)",
+)
+async def curriculo_do_candidato(
+    candidatura_id: UUID, empresa: Usuario = Depends(exigir_empresa)
+):
+    """A empresa só vê o currículo de quem se candidatou a uma vaga dela e
+    continua no processo: quem desistiu deixa de ser visível."""
+    linha = await query_one(
+        """
+        SELECT e.nome, e.email_if, e.telefone, e.linkedin_url, e.instagram_usuario,
+               cu.dados, cu.atualizado_em
+          FROM candidaturas c
+          JOIN vagas v       ON v.id = c.vaga_id
+          JOIN estudantes e  ON e.id = c.estudante_id
+          JOIN curriculos cu ON cu.estudante_id = e.id
+         WHERE c.id = %s AND v.empresa_id = %s AND c.status <> 'Desistente'
+        """,
+        (candidatura_id, empresa.id),
+    )
+    if linha is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Currículo não encontrado."
+        )
+    return linha
